@@ -267,7 +267,8 @@ public class myMain{
 		
 		while(!hasImproved && improveChance>0){
 
-			for(int c=1; c<st.length; c++){
+			// for(int c=1; c<st.length; c++){
+			for(int c=st.length-1; c>0; c--){
 				My.cout("Tabu Lvl: "+c);
 
 
