@@ -11,7 +11,7 @@ public class myMain{
 	public static void main(String[] args) throws Exception {
 		My.cout("| MAIN START |"); My.cout("---------------");
 		
-		m3();
+		m4();
 		
 		My.cout("---------------"); My.cout("| MAIN END |");
         return;
@@ -191,7 +191,20 @@ public class myMain{
 
 	public static void m3() throws Exception{
 		try {
-			File file = new File("Hard28/Hard28_BPP13.txt");
+			// String alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+			// // int[] packsizes = new int[]{3,7,1,5};
+			// int[] packsizes = new int[]{3,5,1,7,9,7,4,1,8,2};
+			// // int[] packsizes = new int[]{3,5,1};
+			// ArrayList<Bin.Pack> packs = new ArrayList<>();
+			
+			// int cap = 10;
+
+			// for(int i=0; i<packsizes.length; i++){
+			// 	int p = packsizes[i];
+			// 	packs.add(new Bin.Pack(p));
+			// }
+
+			File file = new File("Falkenauer/Falkenauer_T/Falkenauer_t60_00.txt");
 			Scanner scanner = new Scanner(file);
 
 			int num = Integer.parseInt(scanner.nextLine());
@@ -217,10 +230,12 @@ public class myMain{
 
 			Bin.Set set = new Bin.Set(cap);
 
-			// BPP.FirstFit(packs.toArray(new Bin.Pack[packs.size()]), set);
+			BPP.FirstFit(packs.toArray(new Bin.Pack[packs.size()]), set);
+			int[] st = set.getState(packs);
 			
-			int[] st = new int[packs.size()];
-			for(int i=0;i<st.length;i++) st[i] = i;
+			// int[] st = new int[packs.size()];
+			// for(int i=0;i<st.length;i++) st[i] = i;
+
 			// int[] st = set.getState(packs);
 			// My.cout("InitState:\n" + Arrays.toString(st));
 
@@ -231,8 +246,12 @@ public class myMain{
 
 			// set.setState(st, packs.toArray(new Bin.Pack[packs.size()]));
 
-			Bin.Set bestSet = TabuSearch(st, packs.toArray(new Bin.Pack[packs.size()]), cap);
+			Bin.Set bestSet = Tabu(st, packs.toArray(new Bin.Pack[packs.size()]), cap);
 			int[] nSt = bestSet.getState(packs);
+			for(int i=0;i<100;i++){
+				bestSet = Tabu(nSt, packs.toArray(new Bin.Pack[packs.size()]), cap);
+				nSt = bestSet.getState(packs);
+			}
 
 			// My.cout("Best State: "); My.cout(bestSet.toString());
 			My.cout("State: " + Arrays.toString(st));
@@ -244,6 +263,185 @@ public class myMain{
 			throw deeznutz;
 		}
 		
+	}
+
+	public static ArrayList<File> getFiles(File dir){
+		ArrayList<File> files = new ArrayList<>();
+		if(dir.isDirectory()){
+			// My.cout("> Checking inside: "+dir.getName());
+			for(File file:dir.listFiles()){
+				// My.cout(">> Checking: "+file.getName());
+				if(file.isFile()){
+					// My.cout(">> Adding: "+file.getName());
+					files.add(file);
+				}else if(file.isDirectory()){
+					ArrayList<File> _files = getFiles(file);
+					// My.cout("> Checked inside: "+file.getName());
+					My.cout(_files.size());
+					if(_files != null){
+						for(File _file:_files){
+							// My.cout(">> ReAdding: "+_file.getName());
+							files.add(_file);
+						}
+					}
+				}
+			}
+
+			My.cout("<<<< "+files.size()+" >>>>");
+
+			return files;
+		}
+
+		return null;
+	}
+
+	public static class Dataset{
+		public int[] packs;
+		public int capacity;
+
+		public Dataset(int num, int cap){
+			packs = new int[num];
+			capacity = cap;
+
+		}
+	}
+
+	public static void m4(){
+		try{
+			File dir = new File("Falkenauer");
+			ArrayList<File> files = getFiles(dir);
+
+			Dictionary<String,Dataset> datasets = null;
+
+			for(File file:files){
+				My.cout(file.getName());
+				// Scanner scanner = new Scanner(file);
+
+				// int num = Integer.parseInt(scanner.nextLine());
+				// int cap = Integer.parseInt(scanner.nextLine());
+
+				// int i = 0;
+
+				// Dataset dataset = new Dataset(num, cap);
+
+				// while(scanner.hasNextLine() && i<num){
+				// 	int packsize = Integer.parseInt(scanner.nextLine());
+
+				// 	dataset.packs[i] = packsize;
+				// 	i++;
+				// }
+
+			}
+		}catch(Exception err){
+			My.cout(err);
+		}
+	}
+
+	public static Bin.Set Tabu(int[] st, Bin.Pack[] dataset, int cap){
+
+		int maxTabuSize = st.length;
+		
+		int[] currSt = st.clone();
+		ArrayList<int[]> tabuList = new ArrayList<>();
+
+		// My.cout("currSt: "+Arrays.toString(currSt));
+		
+		int[] bestSet = currSt;
+		boolean kindaValid = false;
+		int minMax = My.max(st);
+		int minSum = My.max(st);
+
+		if(minMax <= 1) minMax = Integer.MAX_VALUE;
+		if(minSum <= 0) minSum = Integer.MAX_VALUE;
+
+		tabuList.add(currSt);
+
+		for(int c=1; c<st.length; c++){
+
+			// My.cout("len: "+(currSt.length));
+
+			int[] randSt = BPP.generateRandomState(currSt, currSt.length, true, cap, dataset);
+			
+			int[] parentSt = new int[currSt.length - c];
+			for(int i=0;i<parentSt.length;i++) parentSt[i] = currSt[i];
+
+			ArrayList<Integer> currParentSt = new ArrayList<>();
+			for(int x:parentSt) currParentSt.add(x);
+
+			ArrayList<Integer> invalidBins = new ArrayList<>();
+
+			for(int d=0; d<c; d++){
+				boolean isInvalidBin = false;
+				for(int invalidBin:invalidBins){
+					if(invalidBin == d){
+						isInvalidBin = true; break;
+					}
+				}
+				if(isInvalidBin) continue;
+
+				int max = -1;
+				for(Integer x:currParentSt) if(max < x) max = x;
+
+				boolean _valid = false;
+
+				for(int i=0; i<=max+1; i++){
+					ArrayList<Integer> initSt = (ArrayList<Integer>) currParentSt.clone();
+
+					initSt.add(i);
+
+					int[] _initSt = new int[initSt.size()];
+					for(int _i=0;_i<_initSt.length;_i++) _initSt[_i] = initSt.get(_i);
+					
+					_valid = new Bin.Set(cap).setState(_initSt, dataset, cap);
+					if(_valid){
+						boolean isInTabuList = false;
+						for(int[] tabu:tabuList){
+							if(Arrays.equals(tabu, _initSt)){
+								isInTabuList = true; break;
+							}
+						}
+						if(!isInTabuList){
+							currParentSt = initSt;
+						}
+						break;
+					}
+
+				}
+
+				if(!_valid){
+					if(d == 0) break;
+					invalidBins.add(d);
+					d = 0;
+				}
+			}
+
+			if(currParentSt.size() < currSt.length){
+				continue;
+			}
+
+			currSt = new int[currParentSt.size()];
+			for(int _i=0;_i<currSt.length;_i++) currSt[_i] = currParentSt.get(_i);
+
+			int currMax = My.max(currSt);
+			int currSum = My.sum(currSt);
+
+			if((currMax < minMax) || (currMax == minMax && currSum < minSum)){
+				minMax = currMax;
+				minSum = currSum;
+				bestSet = currSt;
+			}
+			tabuList.add(currSt);
+
+			if(tabuList.size() > maxTabuSize && tabuList.size()>0){
+				tabuList.remove(0);
+			}
+
+		}
+
+		Bin.Set set = new Bin.Set(cap);
+
+		set.setState(bestSet, dataset, cap);
+		return set;
 	}
 
 	public static Bin.Set TabuSearch(int[] st, Bin.Pack[] dataset, int cap){
@@ -285,33 +483,32 @@ public class myMain{
 				while(validCount>0 && !isValid){
 					newSt = BPP.generateRandomState(parentSt, st.length, true, cap, dataset);
 					
-					ArrayList<int[]> hood = BPP.getNeighbourhood(newSt, st.length-1);
+					return null;
 
-					int[] bestOfHood = null;
+					// ArrayList<int[]> hood = BPP.getNeighbourhood(newSt, st.length-1);
 
-					My.cout("hood size: "+hood.size());
+					// int[] bestOfHood = null;
+
+					// My.cout("hood size: "+hood.size());
 					
-					if(hood.size() > 0){
-						for(int[] hoodSt:hood){
-							
-							Bin.Set _bset = new Bin.Set(cap);
-							
-							boolean _isValid = _bset.setState(hoodSt, dataset, cap);
-							
-							if(_isValid){
-								bestOfHood = hoodSt;
-								break;
-							}
-						}
-					}
-					My.cout("bestOfhood: "+Arrays.toString(bestOfHood));
+					// if(hood.size() > 0){
+					// 	for(int[] hoodSt:hood){
+					// 		Bin.Set _bset = new Bin.Set(cap);
+					// 		boolean _isValid = _bset.setState(hoodSt, dataset, cap);
+					// 		if(_isValid){
+					// 			bestOfHood = hoodSt;
+					// 			break;
+					// 		}
+					// 	}
+					// }
+					// // My.cout("bestOfhood: "+Arrays.toString(bestOfHood));
 	
-					if(bestOfHood == null){
-						validCount--;
-					}else{
-						newSt = bestOfHood;
-						isValid = true;
-					}
+					// if(bestOfHood == null){
+					// 	validCount--;
+					// }else{
+					// 	newSt = bestOfHood;
+					// 	isValid = true;
+					// }
 				}
 
 				if(isValid){
@@ -329,12 +526,6 @@ public class myMain{
 					}
 				}
 
-				
-
-				
-				
-
-				
 				
 			}
 			if(!hasImproved){
