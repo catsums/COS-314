@@ -335,7 +335,7 @@ public class myMain{
 
 				if(!hasImproved){
 					improveChance--;
-					// My.cout("Try and improve again..."+improveChance);
+					My.cout("Try and improve again..."+improveChance);
 				}
 					
 			}
