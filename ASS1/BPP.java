@@ -19,7 +19,7 @@ public class BPP {
 
 		for(int i=initSt.size(); i<depth; i++){
 			boolean valid = false;
-			int validTryCount = -1;
+			int validTryCount = initSt.size() + 1;
 			int max = -1;
 			for(Integer x:initSt) if(max < x) max = x;
 			
@@ -27,27 +27,37 @@ public class BPP {
 			// My.cout("i: "+i);
 			// My.cout("max: "+max);
 
-			while(!valid && validTryCount < initSt.size()){
-				validTryCount++;
+			while(!valid && validTryCount > 0){
 				int index = My.rndInt(0, max+1);
 				trySt = (ArrayList<Integer>) initSt.clone();
-
+				
 				trySt.add(index);
-	
+
+				// My.cout("> trySt: "+trySt.toString());
+				
 				if(checkValidity){
-					Bin.Set set = new Bin.Set(cap);
-					int[] _trySt = new int[trySt.size()];
+					while(!valid && trySt.get(trySt.size()-1) >= 0){
+						Bin.Set set = new Bin.Set(cap);
+						int[] _trySt = new int[trySt.size()];
+						
+						for(int c=0;c<trySt.size();c++){
+							_trySt[c] = trySt.get(i);
+						}
 
-					for(int c=0;c<trySt.size();c++){
-						_trySt[c] = trySt.get(i);
-					}
-
-					if(set.setState(_trySt, dataset, cap)){
-						valid = true;
+						// My.cout(">> trySt: "+trySt.toString());
+						
+						if(set.setState(_trySt, dataset, cap)){
+							valid = true;
+						}else{
+							// My.cout("wack");
+							trySt.set(trySt.size()-1, trySt.get(trySt.size()-1) - 1);
+						}
 					}
 				}else{
 					valid = true;
 				}
+				validTryCount--;
+				// My.cout("> validCountTry: "+validTryCount);
 			}
 
 			if(trySt != null){
@@ -58,6 +68,8 @@ public class BPP {
 
 		int[] newSt = new int[initSt.size()];
 		for(int i=0; i<initSt.size(); i++) newSt[i] = initSt.get(i);
+
+		// My.cout("> newSt: "+Arrays.toString(newSt));
 
 		return newSt;
 	}
