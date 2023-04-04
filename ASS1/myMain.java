@@ -284,11 +284,30 @@ public class myMain{
 	
 				while(validCount>0 && !isValid){
 					newSt = BPP.generateRandomState(parentSt, st.length, true, cap, dataset);
-					isValid = _set.setState(newSt, dataset, cap);
+					
+					ArrayList<int[]> hood = BPP.getNeighbourhood(newSt, st.length-1);
+
+					int[] bestOfHood = null;
+
+					if(hood.size() > 0){
+						for(int[] hoodSt:hood){
 	
-					if(!isValid){
-						// My.cout("checking again");
+							Bin.Set _bset = new Bin.Set(cap);
+	
+							boolean _isValid = _bset.setState(hoodSt, dataset, cap);
+				
+							if(_isValid){
+								bestOfHood = hoodSt;
+								break;
+							}
+						}
+					}
+	
+					if(bestOfHood == null){
 						validCount--;
+					}else{
+						newSt = bestOfHood;
+						isValid = true;
 					}
 				}
 
@@ -307,32 +326,9 @@ public class myMain{
 					}
 				}
 
-				ArrayList<int[]> hood = BPP.getNeighbourhood(newSt, st.length-1);
+				
 
-				if(hood.size() > 0){
-					for(int[] hoodSt:hood){
-
-						int _max = My.max(hoodSt);
-						int _sum = My.sum(hoodSt);
-
-						Bin.Set _bset = new Bin.Set(cap);
-
-						boolean _isValid = _bset.setState(hoodSt, dataset, cap);
-			
-						if(_isValid){
-							// My.cout("Is valid");
-							if((_max < minMax)||(_max == minMax && _sum < minSum)){
-								My.cout("Improvement: max("+_max+" <- "+minMax+")");
-								// My.cout("sum("+_sum+" <- "+minSum+")");
-								minMax = _max;
-								minSum = _sum;
-								bestSet = _bset;
-								kindaValid = true;
-								hasImproved = true;
-							}
-						}
-					}
-				}
+				
 				
 
 				
