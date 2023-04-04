@@ -252,7 +252,7 @@ public class myMain{
 		boolean kindaValid = false;
 		int minMax = My.max(st);
 		int minSum = My.sum(st);
-
+		
 		if(minMax <= 1) minMax = Integer.MAX_VALUE;
 		if(minSum <= 0) minSum = Integer.MAX_VALUE;
 
