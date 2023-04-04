@@ -266,7 +266,8 @@ public class myMain{
 			My.cout("Tabu Lvl: "+c);
 
 			boolean hasImproved = false;
-			int improveChance = st.length/2;
+			// int improveChance = st.length/2;
+			int improveChance = 10;
 
 			while(!hasImproved && improveChance>0){
 				int[] currSt = bestSet.getState(dataset);
