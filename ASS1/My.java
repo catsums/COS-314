@@ -267,7 +267,8 @@ public class My{
 
 	public static double rndDouble(double min, double max){
 		Random rnd = new Random(System.currentTimeMillis());
-		return rnd.nextDouble(max - min + 1) + min;
+		// random.nextDouble()*(maxX - minX) + minX;
+		return rnd.nextDouble() * (max - min) + min;
 	}
 
 	public static int rndInt(int min, int max){
