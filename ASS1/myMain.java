@@ -267,8 +267,7 @@ public class myMain{
 		
 		while(!hasImproved && improveChance>0){
 
-			// for(int c=1; c<st.length; c++){
-			for(int c=st.length-1; c>0; c--){
+			for(int c=1; c<st.length; c++){
 				My.cout("Tabu Lvl: "+c);
 
 
@@ -290,19 +289,22 @@ public class myMain{
 
 					int[] bestOfHood = null;
 
+					My.cout("hood size: "+hood.size());
+					
 					if(hood.size() > 0){
 						for(int[] hoodSt:hood){
-	
+							
 							Bin.Set _bset = new Bin.Set(cap);
-	
+							
 							boolean _isValid = _bset.setState(hoodSt, dataset, cap);
-				
+							
 							if(_isValid){
 								bestOfHood = hoodSt;
 								break;
 							}
 						}
 					}
+					My.cout("bestOfhood: "+Arrays.toString(bestOfHood));
 	
 					if(bestOfHood == null){
 						validCount--;
