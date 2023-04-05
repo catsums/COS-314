@@ -76,27 +76,30 @@ public class BPP {
 
 	public static ArrayList<int[]> getNeighbourSolutions(int[] st){
 		ArrayList<int[]> hood = new ArrayList<>();
-
+		My.cout("z...");
 		for(int i=1; i<st.length; i++){
 			int _max = -1;
 			for(int j=0; j<i; j++){
 				if(st[j] > _max) _max = st[j];
 			}
+			// My.cout("max..."+_max);
 
 			for(int c=0; c<=_max+1; c++){
+				// My.cout("c = "+c);
 				int[] initSt = st.clone();
 
 				initSt[i] = c;
 
-				if(!Arrays.equals(st, initSt)){
-					boolean existsInHood = false;
-					for(int[] _st:hood){
-						if(Arrays.equals(_st, initSt)){
-							existsInHood = true;
-							break;
-						}
-					}
-					if(!existsInHood) hood.add(initSt);
+				if(!(st.hashCode()==initSt.hashCode())){
+					// boolean existsInHood = false;
+					// for(int[] _st:hood){
+					// 	if(_st.hashCode() == initSt.hashCode()){
+					// 		existsInHood = true;
+					// 		break;
+					// 	}
+					// }
+					// if(!existsInHood) hood.add(initSt);
+					hood.add(initSt);
 				}
 			}
 
@@ -106,24 +109,27 @@ public class BPP {
 	}
 
 	public static ArrayList<int[]> getNeighbourhood(int[] st, int depth){
+		My.cout("y...");
 		ArrayList<int[]> hood = new ArrayList<>();
 		if(depth >= st.length || depth<0) return hood;
 
 		int _max = -1;
 		int[] parentSt = new int[st.length - (st.length - depth)];
 		int[] base = new int[st.length - (st.length - depth) + 1];
-		
+		My.cout("z...");
+		My.cout("p..."+parentSt.length);
 		for(int i=0; i<parentSt.length; i++){
 			parentSt[i] = st[i];
 			base[i] = st[i];
 			if(parentSt[i] > _max) _max = parentSt[i];
 		}
 
-		// My.cout("st: "+Arrays.toString(st));
-		// My.cout("parentSt: "+Arrays.toString(parentSt));
-		// My.cout("base: "+Arrays.toString(base));
+		My.cout("st: "+Arrays.toString(st));
+		My.cout("parentSt: "+Arrays.toString(parentSt));
+		My.cout("base: "+Arrays.toString(base));
 
 		for(int i=0; i<=depth; i++){
+			My.cout(">>> i = "+i);
 			int[] otherSt = base.clone();
 			otherSt[depth] = i;
 
