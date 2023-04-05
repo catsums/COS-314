@@ -77,11 +77,12 @@ public class BPP {
 	public static ArrayList<int[]> getNeighbourSolutions(int[] st){
 		ArrayList<int[]> hood = new ArrayList<>();
 		My.cout("z...");
+		int _max = -1;
 		for(int i=1; i<st.length; i++){
-			int _max = -1;
-			for(int j=0; j<i; j++){
-				if(st[j] > _max) _max = st[j];
-			}
+			if(st[i-1] > _max) _max = st[i-1];
+			// for(int j=0; j<i; j++){
+			// 	if(st[j] > _max) _max = st[j];
+			// }
 			// My.cout("max..."+_max);
 
 			for(int c=0; c<=_max+1; c++){
