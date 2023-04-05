@@ -277,7 +277,7 @@ public class myMain{
 				}else if(file.isDirectory()){
 					ArrayList<File> _files = getFiles(file);
 					// My.cout("> Checked inside: "+file.getName());
-					My.cout(_files.size());
+					// My.cout(_files.size());
 					if(_files != null){
 						for(File _file:_files){
 							// My.cout(">> ReAdding: "+_file.getName());
@@ -287,12 +287,30 @@ public class myMain{
 				}
 			}
 
-			My.cout("<<<< "+files.size()+" >>>>");
+			// My.cout("<<<< "+files.size()+" >>>>");
 
 			return files;
 		}
 
 		return null;
+	}
+
+	public static class Timestamp{
+		private long startTime = 0;
+		private long stopTime = 0;
+
+		public void start(){
+			startTime = System.currentTimeMillis();
+		}public long stop(){
+			stopTime = System.currentTimeMillis();
+			return getTimeTakenInMillis();
+		}
+		public long getTimeTakenInMillis(){
+			return Math.abs(stopTime - startTime);
+		}
+		public void reset(){
+			startTime = 0; stopTime = 0;
+		}
 	}
 
 	public static class Dataset{
@@ -305,33 +323,140 @@ public class myMain{
 
 		}
 	}
+	public static class SearchResult{
+		public String name;
+		public int[] init_state;
+
+		public int ILS_size(){
+			if(ILS_state != null) return ILS_state.length;
+			return -1;
+		}
+		public int[] ILS_state;
+		public long ILS_time;
+
+		public int Tabu_size(){
+			if(Tabu_state != null) return Tabu_state.length;
+			return -1;
+		}
+		public int[] Tabu_state;
+		public long Tabu_time;
+
+		public SearchResult(String n){ name = n; }
+
+		@Override
+		public String toString(){
+			String out = "";
+			out += name + ":\t ";
+			out += "ILS{ ";
+			out += "time: " + ILS_time + "\t ";
+			out += "setSize: " + ILS_size() + " ";
+			out += "}";
+
+			out += "Tabu{ ";
+			out += "time: " + Tabu_time + "\t ";
+			out += "setSize: " + Tabu_size() + " ";
+			out += "}";
+
+			return out;
+		}
+	}
 
 	public static void m4(){
 		try{
-			File dir = new File("Falkenauer");
+			File dir = new File("Falkenauer/Falkenauer_T");
+			My.cout("Reading file directories...");
 			ArrayList<File> files = getFiles(dir);
+			My.cout("Read file directories.");
 
-			Dictionary<String,Dataset> datasets = null;
+			HashMap<String,Dataset> datasets = new HashMap<>();
 
-			for(File file:files){
-				My.cout(file.getName());
-				// Scanner scanner = new Scanner(file);
+			My.cout("Reading files...");
 
-				// int num = Integer.parseInt(scanner.nextLine());
-				// int cap = Integer.parseInt(scanner.nextLine());
+			for(int k=0; k<files.size(); k++){
+				File file = files.get(k);
 
-				// int i = 0;
+				Scanner scanner = new Scanner(file);
 
-				// Dataset dataset = new Dataset(num, cap);
+				String name = file.getName();
 
-				// while(scanner.hasNextLine() && i<num){
-				// 	int packsize = Integer.parseInt(scanner.nextLine());
+				int num = Integer.parseInt(scanner.nextLine());
+				int cap = Integer.parseInt(scanner.nextLine());
+				Dataset dataset = new Dataset(num, cap);
+				
+				int i = 0;
+				while(scanner.hasNextLine() && i<num){
+					int packsize = Integer.parseInt(scanner.nextLine());
 
-				// 	dataset.packs[i] = packsize;
-				// 	i++;
-				// }
+					dataset.packs[i] = packsize;
+					i++;
+				}
+
+				datasets.put(name, dataset);
+
+				My.cout(name + " got read\t [" + (k+1) + " of " + files.size() + "]");
+
 
 			}
+
+			My.cout("Read files.");
+
+			ArrayList<SearchResult> results = new ArrayList<>();
+
+			String[] datasetKeys = datasets.keySet().toArray(new String[datasets.size()]);
+
+			My.cout("Using searches on datasets...");
+
+			for (int k=0; k<datasets.size(); k++) {
+				String setName = datasetKeys[k];
+
+				SearchResult res = new SearchResult(setName);
+				Dataset setObj = datasets.get(setName);
+
+				ArrayList<Bin.Pack> packList = new ArrayList<>();
+				for(int packsize:setObj.packs){
+					packList.add(new Bin.Pack(packsize));
+				}
+
+				packList.sort((a,b)->{
+					if(a.size > b.size) return 1; if(a.size < b.size) return -1; return 0;
+				});
+				
+				Bin.Pack[] packs = packList.toArray(new Bin.Pack[packList.size()]);
+
+				//apply worst fit algorithm
+				int[] st = new int[packs.length];
+				for(int i=0;i<st.length;i++) st[i] = i;
+
+				res.init_state = st;
+
+				Timestamp timer = new Timestamp();
+
+				timer.start();
+				Bin.Set ILSSet = IteratedLocalSearch(st, packs, setObj.capacity);
+				res.ILS_time = timer.stop();
+
+				timer.reset();
+
+				timer.start();
+				Bin.Set TabuSet = Tabu(st, packs, setObj.capacity);
+				res.ILS_time = timer.stop();
+
+				if(ILSSet != null) res.ILS_state = ILSSet.getState(packs);
+				if(TabuSet != null) res.Tabu_state = TabuSet.getState(packs);
+
+				My.cout(res.name + " is complete\t [" + (k+1) + " of " + datasets.size() + "]");
+				
+				results.add(res);
+
+			}
+
+			My.cout("Completed searches");
+
+			My.cout("Results:\n -----------");
+			for(SearchResult res:results){
+				My.cout(res.toString());
+			}
+
 		}catch(Exception err){
 			My.cout(err);
 		}
@@ -358,7 +483,7 @@ public class myMain{
 
 		for(int c=1; c<st.length; c++){
 
-			// My.cout("len: "+(currSt.length));
+			My.cout("Tabu Lvl: "+(c));
 
 			int[] randSt = BPP.generateRandomState(currSt, currSt.length, true, cap, dataset);
 			
@@ -545,14 +670,18 @@ public class myMain{
 		//xyz is true if valid
 		boolean xyz = currSet.setState(st, dataset);
 		
-		// My.cout("curr is valid: "+xyz);
+		My.cout("curr is valid: "+xyz);
 		if(!xyz) return currSet;
 
 		ArrayList<Bin.Pack> packs = new ArrayList<>();
 		for(Bin.Pack pack:dataset) packs.add(pack);
 
+		My.cout("Getting the hood...");
 		ArrayList<int[]> initHood = BPP.getNeighbourSolutions(st);
+		My.cout("initHoodsize: "+initHood.size());
+		My.cout("Filtering the hood...");
 		ArrayList<int[]> hood = BPP.filterStates(initHood, packs, cap);
+		My.cout("hoodsize: "+hood.size());
 
 		Bin.Set bestSet = null;
 		boolean s = false;
@@ -565,6 +694,7 @@ public class myMain{
 			if(minSum <= 0) minSum = Integer.MAX_VALUE;
 
 			for(int[] _st:hood){
+				My.cout("_st in hood: "+Arrays.toString(_st));
 				int _max = My.max(_st);
 				int _sum = My.sum(_st);
 				boolean isValid = false;
@@ -578,7 +708,7 @@ public class myMain{
 						minSum = _sum;
 						bestSet = _set;
 						s = true;
-						// My.cout("Improvement");
+						My.cout("Improvement");
 					}
 				}
 			}
@@ -591,9 +721,9 @@ public class myMain{
 			if(!Arrays.equals(_st, st)){
 				currSet = IteratedLocalSearch(bestSet.getState(dataset), dataset, cap);
 			}
-			// My.cout("Yee fam");
+			My.cout("Yee fam");
 		}else{
-			// My.cout("Nah fam");
+			My.cout("Nah fam");
 		}
 
 
