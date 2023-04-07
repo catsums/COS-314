@@ -74,9 +74,50 @@ public class BPP {
 		return newSt;
 	}
 
+	public static ArrayList<int[]> getNeighbourSolutions(int[] st, Bin.Pack[] packs, int cap){
+		ArrayList<int[]> hood = new ArrayList<>();
+		// My.cout("z...");
+		int _max = -1;
+		for(int i=1; i<st.length; i++){
+			if(st[i-1] > _max) _max = st[i-1];
+			// for(int j=0; j<i; j++){
+			// 	if(st[j] > _max) _max = st[j];
+			// }
+			// My.cout("max..."+_max);
+
+			for(int c=0; c<=_max+1; c++){
+				// My.cout("c = "+c);
+				int[] initSt = st.clone();
+
+				initSt[i] = c;
+
+				boolean _valid = false;
+
+				Bin.Set _set = new Bin.Set(cap);
+				_valid = _set.setState(initSt, packs, cap);
+
+				if(!(st.hashCode()==initSt.hashCode()) && _valid){
+					// boolean existsInHood = false;
+					// for(int[] _st:hood){
+					// 	if(_st.hashCode() == initSt.hashCode()){
+					// 		existsInHood = true;
+					// 		break;
+					// 	}
+					// }
+					// if(!existsInHood) hood.add(initSt);
+					hood.add(initSt);
+					break;
+				}
+			}
+
+		}
+
+		return hood;
+	}
+
 	public static ArrayList<int[]> getNeighbourSolutions(int[] st){
 		ArrayList<int[]> hood = new ArrayList<>();
-		My.cout("z...");
+		// My.cout("z...");
 		int _max = -1;
 		for(int i=1; i<st.length; i++){
 			if(st[i-1] > _max) _max = st[i-1];
