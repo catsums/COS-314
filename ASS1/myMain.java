@@ -3,6 +3,8 @@ import java.util.Arrays;
 
 import java.util.*;
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 public class myMain{
 
@@ -413,10 +415,30 @@ public class myMain{
 		}
 	}
 
+	public static class TotalSearchResult extends SearchResult{
+		public int ILS_bins = 0;
+		public int Tabu_bins = 0;
+
+		public TotalSearchResult(String n){
+			super(n);
+		}
+
+		@Override
+		public int ILS_size(){
+			if(ILS_bins>0) return ILS_bins;
+			else return super.ILS_size();
+		}
+		@Override
+		public int Tabu_size(){
+			if(Tabu_bins>0) return Tabu_bins;
+			else return super.Tabu_size();
+		}
+	}
+
 	public static void m4(){
 		try{
 			File dir = new File("Hard28");
-			My.cout("Reading file directories...");
+			My.cout("Reading file directories from "+dir.getName()+"...");
 			ArrayList<String> paths = getFilesPaths(dir);
 			My.cout("Read file directories.");
 
@@ -432,7 +454,7 @@ public class myMain{
 			String[] datasetKeys = datasets.keySet().toArray(new String[len]);
 
 			// for(int k=0; k<paths.size(); k++){
-			for(int k=0; k<len; k++){
+			for(int k=0; k<1; k++){
 			// for(int k=0; k<1; k++){
 				String _path = paths.get(k);
 
@@ -530,11 +552,45 @@ public class myMain{
 			}
 
 			My.cout("Completed searches");
-
+			
+			TotalSearchResult mainResult = new TotalSearchResult(dir.getName());
+			ArrayList<String> strs = new ArrayList<>();
+			
 			My.cout("Results:\n -----------");
 			for(SearchResult res:results){
-				My.cout(res.toString());
+				mainResult.ILS_time += res.ILS_time;
+				mainResult.Tabu_time += res.Tabu_time;
+				mainResult.ILS_bins += res.ILS_size();
+				mainResult.Tabu_bins += res.Tabu_size();
+
+				String str = res.toString();
+				strs.add(str);
+
+				My.cout(str);
 			}
+
+			mainResult.ILS_bins = (mainResult.ILS_bins / results.size());
+			mainResult.Tabu_bins = (mainResult.Tabu_bins / results.size());
+
+			strs.add("\n");
+			strs.add(mainResult.toString());
+
+			My.cout("Writing to log file...");
+
+			try{
+				File newLogFile = new File("MyLogs/"+dir.getName()+".txt");
+				newLogFile.createNewFile();
+	
+				String logStr = String.join("\n", strs);
+	
+				Files.write(Paths.get("./fileName.txt"), logStr.getBytes());
+
+				My.cout("Successfully wrote to log file.");
+			}catch(Exception err){
+				My.cout("Failed to write to log file...");
+			}
+
+
 
 		}catch(Exception err){
 			My.cout(err);
