@@ -1,0 +1,31 @@
+Hard28_BPP119.txt:	 Init{ packs: 200 capacity: 1000 bins: 184  } ILS{ time: 11998, bins: 84 } Tabu{ time: 5822, bins: 98 }
+Hard28_BPP13.txt:	 Init{ packs: 180 capacity: 1000 bins: 162  } ILS{ time: 6672, bins: 71 } Tabu{ time: 3389, bins: 88 }
+Hard28_BPP14.txt:	 Init{ packs: 160 capacity: 1000 bins: 140  } ILS{ time: 5915, bins: 67 } Tabu{ time: 2366, bins: 79 }
+Hard28_BPP144.txt:	 Init{ packs: 200 capacity: 1000 bins: 181  } ILS{ time: 9925, bins: 85 } Tabu{ time: 4848, bins: 95 }
+Hard28_BPP175.txt:	 Init{ packs: 200 capacity: 1000 bins: 180  } ILS{ time: 10518, bins: 91 } Tabu{ time: 5582, bins: 108 }
+Hard28_BPP178.txt:	 Init{ packs: 200 capacity: 1000 bins: 181  } ILS{ time: 10145, bins: 89 } Tabu{ time: 5391, bins: 104 }
+Hard28_BPP181.txt:	 Init{ packs: 180 capacity: 1000 bins: 160  } ILS{ time: 7776, bins: 79 } Tabu{ time: 3293, bins: 92 }
+Hard28_BPP195.txt:	 Init{ packs: 180 capacity: 1000 bins: 156  } ILS{ time: 7114, bins: 71 } Tabu{ time: 2823, bins: 84 }
+Hard28_BPP359.txt:	 Init{ packs: 180 capacity: 1000 bins: 164  } ILS{ time: 8084, bins: 82 } Tabu{ time: 3778, bins: 97 }
+Hard28_BPP360.txt:	 Init{ packs: 160 capacity: 1000 bins: 140  } ILS{ time: 5387, bins: 69 } Tabu{ time: 2112, bins: 80 }
+Hard28_BPP40.txt:	 Init{ packs: 160 capacity: 1000 bins: 140  } ILS{ time: 5115, bins: 64 } Tabu{ time: 2140, bins: 75 }
+Hard28_BPP419.txt:	 Init{ packs: 200 capacity: 1000 bins: 179  } ILS{ time: 10972, bins: 90 } Tabu{ time: 5153, bins: 103 }
+Hard28_BPP47.txt:	 Init{ packs: 180 capacity: 1000 bins: 162  } ILS{ time: 7061, bins: 76 } Tabu{ time: 3368, bins: 92 }
+Hard28_BPP485.txt:	 Init{ packs: 180 capacity: 1000 bins: 157  } ILS{ time: 7481, bins: 79 } Tabu{ time: 3777, bins: 89 }
+Hard28_BPP531.txt:	 Init{ packs: 200 capacity: 1000 bins: 180  } ILS{ time: 9917, bins: 87 } Tabu{ time: 5741, bins: 107 }
+Hard28_BPP561.txt:	 Init{ packs: 200 capacity: 1000 bins: 182  } ILS{ time: 8810, bins: 81 } Tabu{ time: 4387, bins: 93 }
+Hard28_BPP60.txt:	 Init{ packs: 160 capacity: 1000 bins: 149  } ILS{ time: 5487, bins: 69 } Tabu{ time: 2080, bins: 84 }
+Hard28_BPP640.txt:	 Init{ packs: 180 capacity: 1000 bins: 162  } ILS{ time: 7965, bins: 81 } Tabu{ time: 3767, bins: 95 }
+Hard28_BPP645.txt:	 Init{ packs: 160 capacity: 1000 bins: 137  } ILS{ time: 4948, bins: 65 } Tabu{ time: 1930, bins: 74 }
+Hard28_BPP709.txt:	 Init{ packs: 180 capacity: 1000 bins: 163  } ILS{ time: 6988, bins: 75 } Tabu{ time: 3033, bins: 85 }
+Hard28_BPP716.txt:	 Init{ packs: 180 capacity: 1000 bins: 159  } ILS{ time: 7645, bins: 80 } Tabu{ time: 3821, bins: 96 }
+Hard28_BPP742.txt:	 Init{ packs: 160 capacity: 1000 bins: 143  } ILS{ time: 5661, bins: 71 } Tabu{ time: 2261, bins: 86 }
+Hard28_BPP766.txt:	 Init{ packs: 160 capacity: 1000 bins: 143  } ILS{ time: 6111, bins: 71 } Tabu{ time: 2508, bins: 80 }
+Hard28_BPP781.txt:	 Init{ packs: 200 capacity: 1000 bins: 175  } ILS{ time: 8473, bins: 77 } Tabu{ time: 7164, bins: 92 }
+Hard28_BPP785.txt:	 Init{ packs: 180 capacity: 1000 bins: 162  } ILS{ time: 9042, bins: 74 } Tabu{ time: 3850, bins: 89 }
+Hard28_BPP814.txt:	 Init{ packs: 200 capacity: 1000 bins: 181  } ILS{ time: 13517, bins: 90 } Tabu{ time: 7413, bins: 104 }
+Hard28_BPP832.txt:	 Init{ packs: 160 capacity: 1000 bins: 146  } ILS{ time: 9534, bins: 69 } Tabu{ time: 2949, bins: 78 }
+Hard28_BPP900.txt:	 Init{ packs: 200 capacity: 1000 bins: 181  } ILS{ time: 18773, bins: 83 } Tabu{ time: 6799, bins: 96 }
+
+
+Hard28:	 ILS{ time: 237034, bins: 77 } Tabu{ time: 111545, bins: 90 }

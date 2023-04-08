@@ -1,0 +1,13 @@
+HARD0.txt:	 Init{ packs: 200 capacity: 100000 bins: 197  } ILS{ time: 12181, bins: 67 } Tabu{ time: 4254, bins: 63 }
+HARD1.txt:	 Init{ packs: 200 capacity: 100000 bins: 197  } ILS{ time: 10754, bins: 67 } Tabu{ time: 4068, bins: 65 }
+HARD2.txt:	 Init{ packs: 200 capacity: 100000 bins: 197  } ILS{ time: 10089, bins: 67 } Tabu{ time: 4249, bins: 65 }
+HARD3.txt:	 Init{ packs: 200 capacity: 100000 bins: 197  } ILS{ time: 10903, bins: 66 } Tabu{ time: 3777, bins: 63 }
+HARD4.txt:	 Init{ packs: 200 capacity: 100000 bins: 197  } ILS{ time: 10284, bins: 67 } Tabu{ time: 4474, bins: 64 }
+HARD5.txt:	 Init{ packs: 200 capacity: 100000 bins: 197  } ILS{ time: 9073, bins: 67 } Tabu{ time: 3279, bins: 63 }
+HARD6.txt:	 Init{ packs: 200 capacity: 100000 bins: 197  } ILS{ time: 9330, bins: 67 } Tabu{ time: 2940, bins: 64 }
+HARD7.txt:	 Init{ packs: 200 capacity: 100000 bins: 197  } ILS{ time: 8250, bins: 63 } Tabu{ time: 4172, bins: 62 }
+HARD8.txt:	 Init{ packs: 200 capacity: 100000 bins: 197  } ILS{ time: 11647, bins: 67 } Tabu{ time: 3360, bins: 64 }
+HARD9.txt:	 Init{ packs: 200 capacity: 100000 bins: 197  } ILS{ time: 8635, bins: 67 } Tabu{ time: 3166, bins: 64 }
+
+
+Scholl_3:	 ILS{ time: 101146, bins: 66 } Tabu{ time: 37739, bins: 63 }

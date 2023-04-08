@@ -1,0 +1,14 @@
+Falkenauer_u120_01.txt:	 Init{ packs: 120 capacity: 150 bins: 115  } ILS{ time: 3539, bins: 57 } Tabu{ time: 2911, bins: 61 }
+Falkenauer_u120_02.txt:	 Init{ packs: 120 capacity: 150 bins: 115  } ILS{ time: 3863, bins: 54 } Tabu{ time: 731, bins: 58 }
+Falkenauer_u120_03.txt:	 Init{ packs: 120 capacity: 150 bins: 115  } ILS{ time: 3093, bins: 58 } Tabu{ time: 873, bins: 62 }
+Falkenauer_u120_04.txt:	 Init{ packs: 120 capacity: 150 bins: 114  } ILS{ time: 3301, bins: 56 } Tabu{ time: 744, bins: 65 }
+Falkenauer_u120_05.txt:	 Init{ packs: 120 capacity: 150 bins: 114  } ILS{ time: 3226, bins: 57 } Tabu{ time: 964, bins: 59 }
+Falkenauer_u120_06.txt:	 Init{ packs: 120 capacity: 150 bins: 115  } ILS{ time: 3527, bins: 58 } Tabu{ time: 1014, bins: 59 }
+Falkenauer_u120_07.txt:	 Init{ packs: 120 capacity: 150 bins: 115  } ILS{ time: 4835, bins: 58 } Tabu{ time: 1310, bins: 63 }
+Falkenauer_u120_08.txt:	 Init{ packs: 120 capacity: 150 bins: 115  } ILS{ time: 4398, bins: 58 } Tabu{ time: 1275, bins: 64 }
+Falkenauer_u120_09.txt:	 Init{ packs: 120 capacity: 150 bins: 114  } ILS{ time: 4043, bins: 53 } Tabu{ time: 1794, bins: 58 }
+Falkenauer_u120_10.txt:	 Init{ packs: 120 capacity: 150 bins: 115  } ILS{ time: 4641, bins: 58 } Tabu{ time: 1899, bins: 67 }
+Falkenauer_u120_11.txt:	 Init{ packs: 120 capacity: 150 bins: 115  } ILS{ time: 5351, bins: 56 } Tabu{ time: 920, bins: 62 }
+
+
+Falkenauer_U:	 ILS{ time: 43817, bins: 56 } Tabu{ time: 14435, bins: 61 }

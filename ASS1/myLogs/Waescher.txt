@@ -1,0 +1,20 @@
+Waescher_TEST0005.txt:	 Init{ packs: 114 capacity: 10000 bins: 93  } ILS{ time: 2269, bins: 31 } Tabu{ time: 956, bins: 32 }
+Waescher_TEST0014.txt:	 Init{ packs: 96 capacity: 10000 bins: 74  } ILS{ time: 1190, bins: 25 } Tabu{ time: 566, bins: 26 }
+Waescher_TEST0022.txt:	 Init{ packs: 57 capacity: 10000 bins: 41  } ILS{ time: 641, bins: 15 } Tabu{ time: 103, bins: 16 }
+Waescher_TEST0030.txt:	 Init{ packs: 111 capacity: 10000 bins: 89  } ILS{ time: 3361, bins: 29 } Tabu{ time: 533, bins: 31 }
+Waescher_TEST0044.txt:	 Init{ packs: 164 capacity: 10000 bins: 125  } ILS{ time: 3104, bins: 15 } Tabu{ time: 1038, bins: 15 }
+Waescher_TEST0049.txt:	 Init{ packs: 141 capacity: 10000 bins: 95  } ILS{ time: 2303, bins: 12 } Tabu{ time: 570, bins: 12 }
+Waescher_TEST0054.txt:	 Init{ packs: 144 capacity: 10000 bins: 101  } ILS{ time: 3356, bins: 15 } Tabu{ time: 479, bins: 15 }
+Waescher_TEST0055A.txt:	 Init{ packs: 142 capacity: 10000 bins: 111  } ILS{ time: 2304, bins: 16 } Tabu{ time: 1824, bins: 17 }
+Waescher_TEST0055B.txt:	 Init{ packs: 239 capacity: 10000 bins: 191  } ILS{ time: 6645, bins: 21 } Tabu{ time: 3621, bins: 22 }
+Waescher_TEST0058.txt:	 Init{ packs: 91 capacity: 10000 bins: 70  } ILS{ time: 1771, bins: 21 } Tabu{ time: 465, bins: 23 }
+Waescher_TEST0065.txt:	 Init{ packs: 60 capacity: 10000 bins: 47  } ILS{ time: 452, bins: 16 } Tabu{ time: 203, bins: 17 }
+Waescher_TEST0068.txt:	 Init{ packs: 163 capacity: 10000 bins: 119  } ILS{ time: 2146, bins: 13 } Tabu{ time: 630, bins: 13 }
+Waescher_TEST0075.txt:	 Init{ packs: 228 capacity: 10000 bins: 145  } ILS{ time: 4485, bins: 14 } Tabu{ time: 3879, bins: 14 }
+Waescher_TEST0082.txt:	 Init{ packs: 86 capacity: 10000 bins: 66  } ILS{ time: 874, bins: 27 } Tabu{ time: 557, bins: 29 }
+Waescher_TEST0084.txt:	 Init{ packs: 92 capacity: 10000 bins: 73  } ILS{ time: 1094, bins: 17 } Tabu{ time: 183, bins: 18 }
+Waescher_TEST0095.txt:	 Init{ packs: 153 capacity: 10000 bins: 112  } ILS{ time: 2112, bins: 17 } Tabu{ time: 1636, bins: 18 }
+Waescher_TEST0097.txt:	 Init{ packs: 119 capacity: 10000 bins: 77  } ILS{ time: 1158, bins: 13 } Tabu{ time: 241, bins: 13 }
+
+
+Waescher:	 ILS{ time: 39265, bins: 18 } Tabu{ time: 17484, bins: 19 }
