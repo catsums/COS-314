@@ -433,6 +433,25 @@ public class myMain{
 			if(Tabu_bins>0) return Tabu_bins;
 			else return super.Tabu_size();
 		}
+		@Override
+		public String toString(){
+			String out = "";
+			out += name + ":\t ";
+
+			out += "ILS{ ";
+			out += "time: " + ILS_time + ", ";
+			out += "bins: " + ILS_bins + " ";
+			out += "}";
+
+			out += " ";
+
+			out += "Tabu{ ";
+			out += "time: " + Tabu_time + ", ";
+			out += "bins: " + Tabu_bins + " ";
+			out += "}";
+
+			return out;
+		}
 	}
 
 	public static void m4(){
@@ -447,14 +466,16 @@ public class myMain{
 			My.cout("Reading files...");
 
 			// int len = paths.size();
-			int len = paths.size();
+			int len = (int) ((double)(paths.size()) / 2.5);
+
+			// if(len > 100) len = 100;
 
 			ArrayList<SearchResult> results = new ArrayList<>();
 
 			String[] datasetKeys = datasets.keySet().toArray(new String[len]);
 
 			// for(int k=0; k<paths.size(); k++){
-			for(int k=0; k<1; k++){
+			for(int k=21; k<len; k++){
 			// for(int k=0; k<1; k++){
 				String _path = paths.get(k);
 
@@ -578,16 +599,18 @@ public class myMain{
 			My.cout("Writing to log file...");
 
 			try{
-				File newLogFile = new File("MyLogs/"+dir.getName()+".txt");
+				File newLogFile = new File("myLogs/"+dir.getName()+".txt");
+				new File("myLogs").mkdir();
 				newLogFile.createNewFile();
 	
 				String logStr = String.join("\n", strs);
 	
-				Files.write(Paths.get("./fileName.txt"), logStr.getBytes());
+				Files.write(Paths.get(newLogFile.getPath()), logStr.getBytes());
 
 				My.cout("Successfully wrote to log file.");
 			}catch(Exception err){
 				My.cout("Failed to write to log file...");
+				My.cout(err.toString());
 			}
 
 
