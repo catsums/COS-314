@@ -266,13 +266,13 @@ public class My{
 	}
 
 	public static double rndDouble(double min, double max){
-		Random rnd = new Random(System.currentTimeMillis());
+		Random rnd = new Random();
 		// random.nextDouble()*(maxX - minX) + minX;
 		return rnd.nextDouble() * (max - min) + min;
 	}
 
 	public static int rndInt(int min, int max){
-		Random rnd = new Random(System.currentTimeMillis());
+		Random rnd = new Random();
 		return rnd.nextInt(max - min + 1) + min;
 	}
 
