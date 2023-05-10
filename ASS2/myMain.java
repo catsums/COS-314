@@ -27,9 +27,9 @@ public class myMain{
 
 	public static class Sack{
 		public ArrayList<Item> items = new ArrayList<>();
-		public int maxWeight;
+		public double maxWeight;
 
-		public Sack(int w){
+		public Sack(double w){
 			maxWeight = w;
 		}
 
@@ -49,12 +49,12 @@ public class myMain{
 			return w;
 		}
 
-		public int getMaxWeight(){
+		public double getMaxWeight(){
 			return maxWeight;
 		}
 
-		public int getTotalValue(){
-			int w = 0;
+		public double getTotalValue(){
+			double w = 0;
 			for(Item item:items){
 				w += item.value;
 			}
@@ -88,10 +88,10 @@ public class myMain{
 	}
 
 	public static class Item{
-		public int weight;
-		public int value;
+		public double weight;
+		public double value;
 		
-		public Item(int w,int v){
+		public Item(double w,double v){
 			weight = w; value = v;
 		}
 
@@ -361,7 +361,7 @@ public class myMain{
 		Comparator<? super boolean[]> sortingAlgo = (a,b)->{
 			Sack sackA = new Sack(weight);
 			Sack sackB = new Sack(weight);
-			int aVal = -1, bVal = -1;
+			double aVal = -1, bVal = -1;
 
 			if(sackA.setState(a, items)){
 				aVal = sackA.getTotalValue();
@@ -369,10 +369,10 @@ public class myMain{
 			if(sackB.setState(b, items)){
 				bVal = sackB.getTotalValue();
 			}
-			return (bVal - aVal);
+			return (int) (bVal - aVal);
 		};
 
-		HashMap<Integer,Integer> map = new HashMap<>();
+		HashMap<Integer,Double> map = new HashMap<>();
 		ArrayList<boolean[]> ants = new ArrayList<>();
 
 		ArrayList<boolean[]> explored;
@@ -394,7 +394,7 @@ public class myMain{
 
 				boolean[] ant = ants.get(i);
 
-				int pts = 0;
+				double pts = 0;
 				if(map.containsKey(booleanArrayToInt(ant)))
 					pts = map.get(booleanArrayToInt(ant));
 
@@ -440,14 +440,14 @@ public class myMain{
 				// My.cout("ant "+stateToString(ant));
 
 				if(booleanArrayToInt(st) != booleanArrayToInt(ant)){
-					int newPts = pts + 1;
+					double newPts = pts + 1;
 					map.put( booleanArrayToInt(st) , newPts );
 					ants.set(i, st);
 				}else{
 					Sack sack = new Sack(weight);
 					sack.setState(st, items);
 
-					int newPts = pts + sack.getTotalValue() + 1;
+					double newPts = pts + sack.getTotalValue() + 1;
 					map.put( booleanArrayToInt(st) , newPts );
 					ants.remove(ant);
 				}
@@ -505,7 +505,7 @@ public class myMain{
 		Comparator<? super boolean[]> sortingAlgo = (a,b)->{
 			Sack sackA = new Sack(weight);
 			Sack sackB = new Sack(weight);
-			int aVal = -1, bVal = -1;
+			double aVal = -1, bVal = -1;
 
 			if(sackA.setState(a, items)){
 				aVal = sackA.getTotalValue();
@@ -513,7 +513,7 @@ public class myMain{
 			if(sackB.setState(b, items)){
 				bVal = sackB.getTotalValue();
 			}
-			return (bVal - aVal);
+			return (int) (bVal - aVal);
 		};
 
 		ArrayList<boolean[]> population = new ArrayList<>();
@@ -634,31 +634,128 @@ public class myMain{
 
 	}
 
-	public static class 
+	public static class Result{
+		public HashMap<String,Object> params;
+		public String name;
+		public boolean[] finalState;
+
+		public Result(String n){ name = n; }
+
+		public Object getParam(String key){
+			if(params.containsKey(key)) return params.get(key);
+			return null;
+		}
+		public Object setParam(String key, Object val){
+			Object x = getParam(key);
+			params.put(key, val);
+			return x;
+		}
+
+		@Override
+		public String toString(){
+			String out = "";
+
+			out += name + " : {";
+			
+			for(String key:params.keySet()){
+				out += key + " : " +  params.get(key).toString();
+			}
+
+			out += "}";
+
+			return out;
+		} 
+	}
+
+	public static class TResult{
+		public String name;
+		public ArrayList<Result> results;
+
+		public TResult(String n){ name = n; }
+
+		public void addResult(Result r){ results.add(r); }
+
+		@Override
+		public String toString(){
+			String out = "[";
+
+			for(Result r:results){
+				out += r.toString() + "\n";
+			}
+
+			out += "]";
+
+			return out;
+		} 
+	}
+	//public static awesome Shiza()
+	//{
+		//Cassim is great at coding and he totally got this assignment in the bag cos hes a salaying bestie fr fr and hes fricken smart and what not yeah... thats about it so yeah 
+//return shiza is the bestest bestie in the world hahahahahahahahahahahahahahahahahahahahahaha i fell in love with an emo girl. all I want is emo gurllllll sheeesshhh....
+
+	//}
+
+	
+	public static ArrayList<String> getFilesPaths(File dir){
+		ArrayList<String> paths = new ArrayList<>();
+		if(dir.isDirectory()){
+			for(File file:dir.listFiles()){
+				if(file.isFile()){
+					paths.add(file.getPath());
+				}else if(file.isDirectory()){
+					ArrayList<String> _paths = getFilesPaths(file);
+					if(_paths != null){
+						for(String _path:_paths){
+							paths.add(_path);
+						}
+					}
+				}
+			}
+
+			return paths;
+		}
+
+		return null;
+	}
+
+	public static class Dataset{
+		public ArrayList<Item> items = new ArrayList<>();
+		public int capacity = 0;
+
+		public Dataset(int w){
+			capacity = w;
+		}
+	}
 		
 	public static void m2(){
+
+		///settings
+
+		int popSize = 5;
+		int iterations = 5;
+		double crossOverRate = 0.5;
+		double mutationRate = 0.5;
+
+		int colonySize = 100;
+
+
 		try{
-			File dir = new File("Knapsack Instances");
+			File dir = new File("Knapsack Instances/f9_l-d_kp_5_80");
 			My.cout("Reading file directories from "+dir.getName()+"...");
 			ArrayList<String> paths = getFilesPaths(dir);
 			My.cout("Read file directories.");
 
-			HashMap<String,Dataset> datasets = new HashMap<>();
+			HashMap<String,ArrayList<Item>> datasets = new HashMap<>();
 
 			My.cout("Reading files...");
 
-			// int len = paths.size();
 			int len = (int) ((double)(paths.size()) / 2.5);
 
-			// if(len > 100) len = 100;
-
-			ArrayList<SearchResult> results = new ArrayList<>();
+			ArrayList<TResult> results = new ArrayList<>();
 
 			String[] datasetKeys = datasets.keySet().toArray(new String[len]);
 
-			// for(int k=0; k<paths.size(); k++){
-			for(int k=21; k<len; k++){
-			// for(int k=0; k<1; k++){
+			for(int k=0; k<len; k++){
 				String _path = paths.get(k);
 
 				File file = null;
@@ -674,15 +771,21 @@ public class myMain{
 
 				String name = file.getName();
 
-				int num = Integer.parseInt(scanner.nextLine());
-				int cap = Integer.parseInt(scanner.nextLine());
-				Dataset dataset = new Dataset(num, cap);
+				String[] settings = scanner.nextLine().split(" ");
+
+				int num = (Integer.parseInt(settings[0]));
+				int cap = (Integer.parseInt(settings[1]));
+				
+				Dataset dataset = new Dataset(cap);
 				
 				int i = 0;
 				while(scanner.hasNextLine() && i<num){
-					int packsize = Integer.parseInt(scanner.nextLine());
+					String[] itemSet = scanner.nextLine().split(" ");
 
-					dataset.packs[i] = packsize;
+					double v = Double.parseDouble(itemSet[0]);
+					double w = Double.parseDouble(itemSet[1]);
+
+					dataset.items.add(new Item(w,v));
 					i++;
 				}
 
@@ -696,75 +799,66 @@ public class myMain{
 			// My.cout("Read files.");
 
 			
-			// My.cout("Using searches on datasets...");
-			My.cout("Using searches on dataset...");
+			My.cout("Using algorithms on dataset...");
 
 			// for (int k=0; k<datasets.size(); k++) {
 			// 	String setName = datasetKeys[k];
 
-				SearchResult res = new SearchResult(name);
-				// Dataset setObj = datasets.get(setName);
-				Dataset setObj = dataset;
+				Result res0 = new Result(name);
 
-				ArrayList<Bin.Pack> packList = new ArrayList<>();
-				for(int packsize:setObj.packs){
-					packList.add(new Bin.Pack(packsize));
-				}
+				res0.setParam("initialPopulation", popSize);
+				res0.setParam("iterationCount", iterations);
+				res0.setParam("crossoverRate", crossOverRate);
 
-				packList.sort((a,b)->{
-					if(a.size > b.size) return 1; if(a.size < b.size) return -1; return 0;
-				});
+				res0.setParam("timeTaken", 0);
+
+				res0.setParam("mutationRate", mutationRate);
 				
-				Bin.Pack[] packs = packList.toArray(new Bin.Pack[packList.size()]);
-
-				My.cout("Packsize: "+packs.length);
-
-				//apply 'best' fit algorithm
-				Bin.Set _set = new Bin.Set(setObj.capacity);
-				BPP.BestFit(packs, _set);
-				int[] st = _set.getState(packs);
-/* 
-				//apply worst fit algorithm
-				int[] st = new int[packs.length];
-				for(int i=0;i<st.length;i++) st[i] = i;
- */
-				res.init_state = st;
-				res.cap = setObj.capacity;
-
-				int iters = 250;
-
 				Timestamp timer = new Timestamp();
-
-				timer.start();
-				Bin.Set ILSSet = IteratedLocalSearch(st, packs, setObj.capacity,iters);
-				res.ILS_time = timer.stop();
-
-				timer.reset();
-
-				timer.start();
-				Bin.Set TabuSet = Tabu(st, packs, setObj.capacity,iters);
-				res.Tabu_time = timer.stop();
-
-				if(ILSSet != null) res.ILS_state = ILSSet.getState(packs);
-				if(TabuSet != null) res.Tabu_state = TabuSet.getState(packs);
-
-				My.cout(res.name + " is complete\t [" + (k+1) + " of " + len + "]");
 				
-				results.add(res);
+				timer.start();
+				boolean[] st = geneticAlgo(dataset.items, dataset.capacity, popSize, iterations, crossOverRate,mutationRate);
+				res0.setParam("timeTaken", timer.stop() );
+
+				res0.finalState = st;
+
+				My.cout(name + "(GeneticAlgo) is complete\t [" + (k+1) + " of " + len + "]");
+
+				Result res1 = new Result(name);
+
+				res1.setParam("initialPopulation", popSize);
+				res1.setParam("iterationCount", iterations);
+				res1.setParam("crossoverRate", crossOverRate);
+
+				res1.setParam("timeTaken", 0);
+
+				res1.setParam("mutationRate", mutationRate);
+				
+				timer = new Timestamp();
+				
+				timer.start();
+				st = geneticAlgo(dataset.items, dataset.capacity, popSize, iterations, crossOverRate,mutationRate);
+				res1.setParam("timeTaken", timer.stop() );
+
+				res1.finalState = st;
+
+				My.cout(name + "(AntColonyOpt) is complete\t [" + (k+1) + " of " + len + "]");
+				
+				TResult tresults = new TResult(name);
+
+				tresults.addResult(res0);
+				tresults.addResult(res1);
+
+				results.add(tresults);
 
 			}
 
 			My.cout("Completed searches");
 			
-			TotalSearchResult mainResult = new TotalSearchResult(dir.getName());
 			ArrayList<String> strs = new ArrayList<>();
 			
 			My.cout("Results:\n -----------");
-			for(SearchResult res:results){
-				mainResult.ILS_time += res.ILS_time;
-				mainResult.Tabu_time += res.Tabu_time;
-				mainResult.ILS_bins += res.ILS_size();
-				mainResult.Tabu_bins += res.Tabu_size();
+			for(TResult res:results){
 
 				String str = res.toString();
 				strs.add(str);
@@ -772,11 +866,7 @@ public class myMain{
 				My.cout(str);
 			}
 
-			mainResult.ILS_bins = (mainResult.ILS_bins / results.size());
-			mainResult.Tabu_bins = (mainResult.Tabu_bins / results.size());
-
 			strs.add("\n");
-			strs.add(mainResult.toString());
 
 			My.cout("Writing to log file...");
 
@@ -800,8 +890,6 @@ public class myMain{
 		}catch(Exception err){
 			My.cout(err);
 		}
-	}
-
 	}
 
 	public static void m1(){
