@@ -1,1 +1,1 @@
-java myMain
+java -jar main.jar
