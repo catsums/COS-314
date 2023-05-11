@@ -1,5 +1,7 @@
 ### How to run the program
 
+> Note that this program works better on Windows 8 or later and requires at least Java 8
+
 - Find the .jar file in this folder
 - Run the .jar file using
 	```bash
