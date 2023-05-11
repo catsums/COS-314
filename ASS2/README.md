@@ -18,4 +18,3 @@
 	- PopulationSize, mutationRate, CrossOverRate and Iterations are for GA algorithm
 - Once you enter the parameters, the files will be read and you wait for the program to finish running
 - A folder called myLogs will be created if it does not exist and .txt file will be created as well containing the log information of each instance and the results
-- If the .jar file is not 
