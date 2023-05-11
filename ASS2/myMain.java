@@ -238,7 +238,7 @@ public class myMain{
 	public static void main(String[] args) throws Exception {
 		My.cout("| MAIN START |"); My.cout("---------------");
 		
-		m2();
+		m1();
 		
 		My.cout("---------------"); My.cout("| MAIN END |");
         return;
@@ -926,7 +926,7 @@ public class myMain{
 	}
 
 	public static void m1(){
-		File dir = new File("Knapsack Instances/knapPI_1_100_1000_1");
+		File dir = new File("Knapsack Instances/f3_l-d_kp_4_20");
 		My.cout("Reading file directories from "+dir.getName()+"...");
 
 		ArrayList<Item> assets = new ArrayList<>();
@@ -990,13 +990,13 @@ public class myMain{
 			sack.addItem(assets.get(m));
 		}
 
-		My.cout("St: "+stateToString(sack.getState(assets)));
-		My.cout("V: "+sack.getTotalValue());
-		My.cout("W: "+sack.getCurrentWeight());
+		// My.cout("St: "+stateToString(sack.getState(assets)));
+		// My.cout("V: "+sack.getTotalValue());
+		// My.cout("W: "+sack.getCurrentWeight());
 
 		boolean[] xst = new boolean[assets.size()];
-		xst[0] = true;
 		xst[1] = true;
+		xst[3] = true;
 
 		My.cout("XST: "+stateToString(xst));
 		My.cout("Valid?: "+Sack.IsValidState(xst, assets, sackWeight));
@@ -1004,3 +1004,21 @@ public class myMain{
 
 	}
 }
+
+/*
+ * Block
+ * Dash
+ * Range
+ * Hurt
+ * Breathe
+ * Dr Copeael Idle
+ * Dr Copeael Talk
+ * Enemy Idle
+ * Enemy Attack
+ * Walls
+ * Windows
+ * BrainMatter
+ * Book
+ * UI Elements
+ * 
+ */
