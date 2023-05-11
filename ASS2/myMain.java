@@ -6,8 +6,18 @@ import java.nio.file.Paths;
 import java.sql.Time;
 
 public class myMain{
+	public static void main(String[] args) throws Exception {
+		My.cout("| MAIN START |"); My.cout("---------------");
+		
+		m0();
+		
+		My.cout("---------------"); My.cout("| MAIN END |");
+		return;
+	}
 
+	///CLASSES
 	public static class Timestamp{
+
 		private long startTime = 0;
 		private long stopTime = 0;
 
@@ -139,6 +149,8 @@ public class myMain{
 		}
 	}
 
+	///PROGRAM FUNCTIONS
+
 	public static String stateToString(boolean[] st){
 		if(st == null) return "[]";
 
@@ -149,13 +161,12 @@ public class myMain{
 		return Arrays.toString(_st);
 	}
 
-	public static boolean[] mutate(boolean[] st, ArrayList<Item> items, int w){
+	public static boolean[] mutate(boolean[] st, ArrayList<Item> items, double w){
 		boolean[] newSt = st.clone();
 
 		//check if bit is invalid
 		if(!Sack.IsValidState(newSt, items, w)){
 			//check for largest item
-			// My.cout("Fixing...");
 			int largestItem = 0, leastItem = 0, largestAndLeastItem = -1;
 			for(int i=0;i<st.length;i++){
 				if(items.get(i).value < items.get(leastItem).value){
@@ -191,7 +202,6 @@ public class myMain{
 		for(int i=0;i<st.length;i++){
 			//check if bit can be added once
 			
-			// My.cout("> Adding bit...");
 			if(!newSt[i]){
 				newSt[i] = true;
 				if(Sack.IsValidState(newSt, items, w)){
@@ -235,108 +245,6 @@ public class myMain{
 		return st;
 	}
 
-	public static void main(String[] args) throws Exception {
-		My.cout("| MAIN START |"); My.cout("---------------");
-		
-		m1();
-		
-		My.cout("---------------"); My.cout("| MAIN END |");
-        return;
-    }
-
-	public static void m0(){
-
-		ArrayList<Item> items = new ArrayList<>();
-		items.add( new Item(401, 3));
-		items.add( new Item(302, 6));
-		items.add( new Item(105, 4));
-		items.add( new Item(400, 2));
-		items.add( new Item(290, 5));
-		items.add( new Item(270, 2));
-		items.add( new Item(206, 7));
-		items.add( new Item(404, 5));
-		items.add( new Item(110, 6));
-		items.add( new Item(510, 7));
-		items.add( new Item(991, 6));
-		items.add( new Item(302, 6));
-		items.add( new Item(105, 4));
-		items.add( new Item(423, 2));
-		items.add( new Item(390, 8));
-		items.add( new Item(280, 2));
-		items.add( new Item(306, 2));
-		items.add( new Item(394, 5));
-		items.add( new Item(190, 1));
-		items.add( new Item(510, 7));
-
-		int weight = 2500;
-
-		boolean[] st = antColonyOptimization(items, weight, 100);
-
-		My.cout("Final State: ");
-		My.cout(stateToString(st));
-
-		///////////
-
-		// boolean[] st = {false,false,false,true,true};
-
-		// int num = booleanArrayToInt(st);
-
-		// My.cout(stateToString(st));
-		// My.cout(num);
-
-		// st = intToBooleanArray(num+2, st.length);
-		// My.cout(stateToString(st));
-		// My.cout(booleanArrayToInt(st));
-
-		/////////////////
-
-		// ArrayList<Item> items = new ArrayList<>();
-		// items.add( new Item(401, 3));
-		// items.add( new Item(302, 6));
-		// items.add( new Item(105, 4));
-		// items.add( new Item(400, 2));
-		// items.add( new Item(390, 5));
-		// items.add( new Item(270, 2));
-		// items.add( new Item(206, 7));
-		// items.add( new Item(304, 5));
-		// items.add( new Item(100, 1));
-		// items.add( new Item(510, 7));
-
-		// int weight = 990;
-
-		// boolean[] st = geneticAlgo(items, weight, 10, 4, 0.9,0.9);
-
-		// My.cout("Best Sack: "+stateToString(st));
-
-		// Sack sack = new Sack(10);
-
-		// st = randomState(items.size());
-
-		// My.cout(Arrays.toString(st));
-		
-		// st = mutate(st, items, sack.maxWeight);
-		
-		// My.cout(Arrays.toString(st));
-	}
-
-	/*
-		* init population with random objects
-		* evaluate each obj
-		* while term condition not met
-			* select parents/original objs
-			* reproduce objs to make new objs
-			* mutate/genetic manipulation of parents/original objs
-			* evaluate new objs
-			* select objs for the next gen (remove the rest)
-		* end while
-	*/
-
-	/*
-		[0,0,0,0][0,1,0,1][0,1,1,1][1,0,1,0]
-		[0,1,0,1][0,1,1,1][1,0,1,0]
-		[0,1,1,1][0,1,1,0][0,1,1,0][1,0,1,1][0,1,0,1][1,0,1,1]
-		
-	*/
 
 	public static int booleanArrayToInt(boolean[] arr){
 		int n = 0, len = arr.length;
@@ -442,7 +350,7 @@ public class myMain{
 			explored = new ArrayList<>();
 
 		}
-		My.cout("Final Matrix: ");
+		My.cout("Final Hashmap: ");
 		for(int key:map.keySet())
 			My.cout(stateToString(intToBooleanArray(key, items.size()))+" : "+map.get(key));
 
@@ -463,7 +371,7 @@ public class myMain{
 		return st;
 	}
 
-	public static boolean[] geneticAlgo(ArrayList<Item> items, int weight, int initPopulationSize, int iterations, double crossOverRate, double mutationRate){
+	public static boolean[] geneticAlgo(ArrayList<Item> items, double weight, int initPopulationSize, int iterations, double crossOverRate, double mutationRate){
 
 		int MAX_CAPACITY = 1000;
 
@@ -479,7 +387,6 @@ public class myMain{
 		My.cout("Generating Population...");
 		for(int i=0;i<initPopulationSize;i++){
 			population.add( randomState(items.size()) );
-			// population.add( new boolean[items.size()] );
 		}
 		
 		//Evaluating each object
@@ -583,14 +490,14 @@ public class myMain{
 
 			//evaluate old generation
 			if(oldGen.size() > MAX_CAPACITY/2){
-				My.cout("Capped oldGen at MAX CAPACITY of "+MAX_CAPACITY/2);
+				// My.cout("Capped oldGen at MAX CAPACITY of "+MAX_CAPACITY/2);
 				oldGen.sort(sortingAlgo);
 				ArrayList<boolean[]> temp = new ArrayList<>();
 				for(int i=0;i<MAX_CAPACITY/2;i++) temp.add(oldGen.get(i));
 
 				oldGen = temp;
 			}
-			My.cout("> Old gen: "+oldGen.size());
+			// My.cout("> Old gen: "+oldGen.size());
 			population = new ArrayList<>();
 			for(boolean[] st:oldGen){
 				// My.cout(stateToString(st));
@@ -598,14 +505,14 @@ public class myMain{
 			}
 			//evaluate new generation
 			if(lastGen.size() > MAX_CAPACITY/2){
-				My.cout("Capped newGen at MAX CAPACITY of "+MAX_CAPACITY/2);
+				// My.cout("Capped newGen at MAX CAPACITY of "+MAX_CAPACITY/2);
 				lastGen.sort(sortingAlgo);
 				ArrayList<boolean[]> temp = new ArrayList<>();
 				for(int i=0;i<MAX_CAPACITY/2;i++) temp.add(lastGen.get(i));
 
 				lastGen = temp;
 			}
-			My.cout("> New gen: "+lastGen.size());
+			// My.cout("> New gen: "+lastGen.size());
 			for(boolean[] st:lastGen){
 				// My.cout(stateToString(st));
 				population.add(st);
@@ -734,7 +641,7 @@ public class myMain{
 		}
 	}
 		
-	public static void m2(){
+	public static void m0(){
 		///settings
 
 		int popSize = 5;
@@ -915,110 +822,7 @@ public class myMain{
 				My.cout(err.toString());
 			}
 
-
-
-		// }catch(Exception err){
-		// 	My.cout("Craziest thing happened");
-		// 	My.cout(err);
-		// 	My.cout(err.getStackTrace().toString());
-		// 	My.cout(err.getCause());
-		// }
 	}
 
-	public static void m1(){
-		File dir = new File("Knapsack Instances/f3_l-d_kp_4_20");
-		My.cout("Reading file directories from "+dir.getName()+"...");
-
-		ArrayList<Item> assets = new ArrayList<>();
-
-		int numOfItems=0; int sackWeight=0;
-
-		Sack sack = null;
-
-		try{
-			dir = new File(dir.getPath());
-
-			Scanner scanner = new Scanner(dir);
-
-			String name = dir.getName();
-
-			String amtAndCapacity = scanner.nextLine();
-			String[] xxx = amtAndCapacity.split(" ");
-			if(xxx.length > 1){
-				numOfItems = Integer.parseInt(xxx[0]);
-				sackWeight = Integer.parseInt(xxx[1]);
-				My.cout("NumOfItems: "+numOfItems);
-				My.cout("sackWeight: "+sackWeight);
-
-				sack = new Sack(sackWeight);
-			}
-			
-			int i = 0;
-			while(i<numOfItems && scanner.hasNextLine()){
-				String asset = scanner.nextLine();
-
-				String[] items = asset.split(" ");
-				if(items.length > 1){
-					Item item = new Item(Integer.parseInt(items[0]), Integer.parseInt(items[1]));
-					My.cout(item.toString());
-					assets.add(item);
-				}
-
-				i++;
-			}
-
-			
-			My.cout("Read a total of "+i+" items.");
-		}catch(Exception bruh){
-			My.cout("Reading "+dir.getPath()+" failed due to an error. Going to next");
-			My.cout(bruh);
-			return;
-		}
-		if(sack==null) return;
-
-
-		ArrayList<Integer> is = new ArrayList<>();
-		for(int m=0;m<assets.size();m++){
-			int x = My.rndInt(0, assets.size()-1);
-			while(is.contains(x)){
-				x = (x+1) % assets.size();
-			}
-			is.add(x);
-		}
-		
-		for(Integer m:is){
-			sack.addItem(assets.get(m));
-		}
-
-		// My.cout("St: "+stateToString(sack.getState(assets)));
-		// My.cout("V: "+sack.getTotalValue());
-		// My.cout("W: "+sack.getCurrentWeight());
-
-		boolean[] xst = new boolean[assets.size()];
-		xst[1] = true;
-		xst[3] = true;
-
-		My.cout("XST: "+stateToString(xst));
-		My.cout("Valid?: "+Sack.IsValidState(xst, assets, sackWeight));
-		My.cout("V?: "+Sack.GetStateValue(xst, assets, sackWeight));
-
-	}
 }
 
-/*
- * Block
- * Dash
- * Range
- * Hurt
- * Breathe
- * Dr Copeael Idle
- * Dr Copeael Talk
- * Enemy Idle
- * Enemy Attack
- * Walls
- * Windows
- * BrainMatter
- * Book
- * UI Elements
- * 
- */
