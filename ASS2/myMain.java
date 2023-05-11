@@ -41,6 +41,10 @@ public class myMain{
 			return false;
 		}
 
+		public boolean hasItem(Item item){
+			return items.contains(item);
+		}
+
 		public int getCurrentWeight(){
 			int w = 0;
 			for(Item item:items){
@@ -71,6 +75,7 @@ public class myMain{
 			return st;
 		}
 		public boolean setState(boolean[] st, ArrayList<Item> dataset){
+			if(st == null) return false;
 			ArrayList<Item> newItems = new ArrayList<>();
 			int w = 0;
 
@@ -83,6 +88,31 @@ public class myMain{
 			}
 
 			items = newItems;
+			return true;
+		}
+		public static double GetStateValue(boolean[] st, ArrayList<Item> dataset, double _maxWeight){
+			if(st == null) return 0;
+			double w = 0; double v=0;
+			
+			for(int i=0;i<st.length;i++){
+				if(st[i]){
+					w += dataset.get(i).weight;
+					v += dataset.get(i).value;
+				}
+				if(w > _maxWeight) return 0;
+			}
+			return v;
+		}
+		public static boolean IsValidState(boolean[] st, ArrayList<Item> dataset, double _maxWeight){
+			if(st == null) return false;
+			double w = 0;
+			
+			for(int i=0;i<st.length;i++){
+				if(st[i]){
+					w += dataset.get(i).weight;
+				}
+				if(w > _maxWeight) return false;
+			}
 			return true;
 		}
 	}
@@ -123,25 +153,17 @@ public class myMain{
 		boolean[] newSt = st.clone();
 
 		//check if bit is invalid
-		Sack sack = new Sack(w);
-		boolean valid = sack.setState(newSt, items);
-		if(!valid){
-			// My.cout("> Correcting bit...");
+		if(!Sack.IsValidState(newSt, items, w)){
 			//check for largest item
+			// My.cout("Fixing...");
 			int largestItem = 0, leastItem = 0, largestAndLeastItem = -1;
 			for(int i=0;i<st.length;i++){
 				if(items.get(i).value < items.get(leastItem).value){
 					leastItem = i;
 				}
-				// else if((largestAndLeastItem<0) || (items.get(i).weight > items.get(largestAndLeastItem).weight)){
-				// 	largestAndLeastItem = i;
-				// }
 				if(items.get(i).weight > items.get(largestItem).weight){
 					largestItem = i;
 				}
-				// else if((largestAndLeastItem<0) || (items.get(i).value < items.get(largestAndLeastItem).value)){
-				// 	largestAndLeastItem = i;
-				// }
 				
 				if(
 					(items.get(i).value < items.get(largestItem).value)
@@ -159,52 +181,28 @@ public class myMain{
 				}
 			}
 
-			// My.cout("least "+leastItem);
-			// My.cout("largest "+largestItem);
-			// My.cout("largestAndLeast "+leastItem);
-
 			if(largestAndLeastItem>=0) newSt[largestAndLeastItem] = false;
 			else newSt[largestItem] = false;
 
 			return newSt;
 
 		}
-
 		
 		for(int i=0;i<st.length;i++){
 			//check if bit can be added once
 			
 			// My.cout("> Adding bit...");
 			if(!newSt[i]){
-				boolean gotAdded = sack.addItem(items.get(i));
-				if(gotAdded){
-					newSt = sack.getState(items);
+				newSt[i] = true;
+				if(Sack.IsValidState(newSt, items, w)){
 					return newSt;
 				}
 			}
 
 		}
-		//check if bit can be swapped for better
-		for(int i=0;i<st.length;i++){
-			// My.cout("> Swapping bit...");
-			if(!newSt[i]) continue;
-			for(int j=0;j<st.length;j++){
-				if(i == j || newSt[j]) continue;
-				boolean[] trySt = newSt.clone();
-				trySt[i] = !trySt[i];
-				trySt[j] = !trySt[j];
-
-				Sack trySack = new Sack(w);
-				boolean tryIsValid = trySack.setState(trySt, items);
-				if(tryIsValid && trySack.getTotalValue() >= sack.getTotalValue()){
-					newSt = trySt;
-
-					return newSt;
-				}
-			}
-		}
-
-		// My.cout("> Not edited");
+		//else just randomly set a bit
+		int index = My.rndInt(0, newSt.length-1);
+		newSt[index] = !newSt[index];
 		
 		return newSt; // deez nuts
 	}
@@ -240,7 +238,7 @@ public class myMain{
 	public static void main(String[] args) throws Exception {
 		My.cout("| MAIN START |"); My.cout("---------------");
 		
-		m0();
+		m2();
 		
 		My.cout("---------------"); My.cout("| MAIN END |");
         return;
@@ -359,16 +357,8 @@ public class myMain{
 	public static boolean[] antColonyOptimization(ArrayList<Item> items, int weight, int colonySize){
 
 		Comparator<? super boolean[]> sortingAlgo = (a,b)->{
-			Sack sackA = new Sack(weight);
-			Sack sackB = new Sack(weight);
-			double aVal = -1, bVal = -1;
-
-			if(sackA.setState(a, items)){
-				aVal = sackA.getTotalValue();
-			}
-			if(sackB.setState(b, items)){
-				bVal = sackB.getTotalValue();
-			}
+			double aVal = Sack.GetStateValue(a, items, weight);
+			double bVal = Sack.GetStateValue(b, items, weight);
 			return (int) (bVal - aVal);
 		};
 
@@ -382,10 +372,7 @@ public class myMain{
 			ants.add(ant);
 		}
 
-		My.cout("Starting ants: ");
-		for(boolean[] ant:ants) My.cout(stateToString(ant));
-		My.cout("Start Matrix: ");
-		for(int key:map.keySet()) My.cout(stateToString(intToBooleanArray(key, items.size()))+" : "+map.get(key));
+		My.cout("Starting ants: "+ants.size());
 
 		while(ants.size()>0){
 			explored = new ArrayList<>();
@@ -395,15 +382,14 @@ public class myMain{
 				boolean[] ant = ants.get(i);
 
 				double pts = 0;
-				if(map.containsKey(booleanArrayToInt(ant)))
+				if(map.containsKey(booleanArrayToInt(ant))){
 					pts = map.get(booleanArrayToInt(ant));
+				}
 
 				boolean[] st = ant.clone();
 
 				int len = ants.get(i).length;
 
-				// My.cout("init st "+stateToString(st));
-				// My.cout("ant "+stateToString(ant));
 				for(int b=0;b<len;b++){
 					st = ant.clone();
 
@@ -418,14 +404,11 @@ public class myMain{
 					}
 					if(!flag) continue;
 
-					Sack sack = new Sack(weight);
-					flag = sack.setState(st, items);
+					flag = Sack.IsValidState(st, items, weight);
 
 					if(flag){
 						if(sortingAlgo.compare(st, ant)<0){
-							My.cout("> Path open...");
-							if(map.containsKey(booleanArrayToInt(st))){
-								My.cout("> Increment pheromone on path");
+							if(map.containsKey(booleanArrayToInt(st)) && map.get(booleanArrayToInt(st))!=null){
 								pts += map.get(booleanArrayToInt(st));
 							}
 							break;
@@ -433,61 +416,41 @@ public class myMain{
 					}else{
 						st = ant.clone();
 					}
-
 					
 				}
-				// My.cout("final st "+stateToString(st));
-				// My.cout("ant "+stateToString(ant));
 
 				if(booleanArrayToInt(st) != booleanArrayToInt(ant)){
 					double newPts = pts + 1;
-					map.put( booleanArrayToInt(st) , newPts );
-					ants.set(i, st);
+					if(Sack.IsValidState(st, items, weight)){
+						map.put( booleanArrayToInt(st) , newPts );
+						ants.set(i, st);
+					}
 				}else{
-					Sack sack = new Sack(weight);
-					sack.setState(st, items);
-
-					double newPts = pts + sack.getTotalValue() + 1;
-					map.put( booleanArrayToInt(st) , newPts );
-					ants.remove(ant);
+					double newPts = pts + Sack.GetStateValue(st, items, weight) + 1;
+					ants.remove(i);
+					if(Sack.IsValidState(st, items, weight)){
+						map.put( booleanArrayToInt(st) , newPts );
+						// ants.set(i, st);
+					}
 				}
 				explored.add(st);
 
 			}
 
-			My.cout("Curr ants: ");
-			for(boolean[] ant:ants) My.cout(stateToString(ant));
-			My.cout("Curr Matrix: ");
-			for(int key:map.keySet()) My.cout(stateToString(intToBooleanArray(key, items.size()))+" : "+map.get(key));
+			My.cout("Curr ants: "+ants.size());
 
 			explored = new ArrayList<>();
 
-
-			// int newAntAmt = My.rndInt(0, initColonySize);
-
-			// for(int i=0;i<1;i++){
-			// 	boolean[] ant = new boolean[items.size()];
-			// 	ants.add(ant);
-			// }
-
-			// if(map.hashCode() == lastHash){
-			// 	deadEndCount--;
-			// }else{
-			// 	lastHash = map.hashCode();
-			// }
-
 		}
-
-		// My.cout("Final ants: ");
-		// for(boolean[] ant:ants) My.cout(stateToString(ant));
 		My.cout("Final Matrix: ");
-		for(int key:map.keySet()) My.cout(stateToString(intToBooleanArray(key, items.size()))+" : "+map.get(key));
+		for(int key:map.keySet())
+			My.cout(stateToString(intToBooleanArray(key, items.size()))+" : "+map.get(key));
 
-		int bestKey = -1;
+		int bestKey = 0;
 
 		for(int key:map.keySet()){
-			if(bestKey<0) bestKey = key;
-			else if(map.get(bestKey) < map.get(key)){
+			if(bestKey<0 || !map.containsKey(bestKey)) bestKey = key;
+			else if(map.get(bestKey) < map.get(key) && Sack.IsValidState(intToBooleanArray(key, items.size()), items, weight)){
 				bestKey = key;
 			}
 		}
@@ -495,54 +458,43 @@ public class myMain{
 		if(bestKey<0) return null;
 
 		boolean[] st = intToBooleanArray(bestKey, items.size());
-		My.cout("Final is valid? "+( new Sack(weight).setState(st, items) ));
+		My.cout("Final is valid? "+( Sack.IsValidState(st, items, weight) ));
 
 		return st;
 	}
 
 	public static boolean[] geneticAlgo(ArrayList<Item> items, int weight, int initPopulationSize, int iterations, double crossOverRate, double mutationRate){
 
-		Comparator<? super boolean[]> sortingAlgo = (a,b)->{
-			Sack sackA = new Sack(weight);
-			Sack sackB = new Sack(weight);
-			double aVal = -1, bVal = -1;
+		int MAX_CAPACITY = 1000;
 
-			if(sackA.setState(a, items)){
-				aVal = sackA.getTotalValue();
-			}
-			if(sackB.setState(b, items)){
-				bVal = sackB.getTotalValue();
-			}
+		Comparator<? super boolean[]> sortingAlgo = (a,b)->{
+			double aVal = Sack.GetStateValue(a, items, weight);
+			double bVal = Sack.GetStateValue(b, items, weight);
 			return (int) (bVal - aVal);
 		};
 
 		ArrayList<boolean[]> population = new ArrayList<>();
-		do{
-			//generate population
-			for(int i=0;i<initPopulationSize;i++){
-				population.add( randomState(items.size()) );
-			}
-
-			
-			//Evaluating each object
-			for(int i=0;i<population.size();i++){
-				Sack sack = new Sack(weight);
-				if(!sack.setState(population.get(i), items)){
-					population.remove(i);
-					i--;
-				}
-			}
-		}while(population.size() <= 0);
 		
-		
-		My.cout("Start Population:");
-		for(boolean[] st:population){
-			My.cout(stateToString(st));
+		//generate population
+		My.cout("Generating Population...");
+		for(int i=0;i<initPopulationSize;i++){
+			population.add( randomState(items.size()) );
+			// population.add( new boolean[items.size()] );
 		}
+		
+		//Evaluating each object
+		My.cout("Evaluating First Population...");
+		for(int i=0;i<population.size();i++){
+			boolean[] _st = population.get(i);
+			if(!Sack.IsValidState(_st, items, weight)){
+				population.set(i, mutate(_st, items, weight));
+			}
+		}
+		
+		My.cout("Start Population: "+population.size());
+
 		ArrayList<boolean[]> oldGen = (ArrayList) population.clone();
 		ArrayList<boolean[]> lastGen = new ArrayList<>();
-		ArrayList<boolean[]> currGen = new ArrayList<>();
-
 		int iters = 0;
 
 		while(iters<iterations && population.size() > 0){
@@ -573,29 +525,54 @@ public class myMain{
 					childs.add(_childs[1]);
 
 				}
+
+				if(childs.size() > MAX_CAPACITY/2) break;
 			}
 
 			//mutate parents or old gen
 			for(int i=0; i<oldGen.size(); i++){
 				int m = oldGen.get(i).length;
 				while(My.rndDouble(0, 1) < mutationRate && m>0){
-					oldGen.set(i, mutate(oldGen.get(i), items, weight));
+					boolean[] _st = oldGen.get(i);
+
+					_st = mutate(_st, items, weight);
+					
+					oldGen.set(i, _st);
 					m--;
 				}
 			}
 
 			//evaluate new objects
 			for(int i=0; i<childs.size();i++){
-				Sack sack = new Sack(weight);
-				if(!sack.setState(childs.get(i), items)){
-					childs.remove(i); i--;
+				if(!Sack.IsValidState(childs.get(i), items, weight)){
+					//force mutate
+					for(int m=0;m<items.size();m++){
+						boolean[] xst = childs.get(i);
+						for(int b=0;b<xst.length;b++){
+							if(xst[b]) xst[b] = false;
+							if(Sack.IsValidState(xst, items, weight)) break;
+						}
+						childs.set(i, xst);
+
+						if(Sack.IsValidState(childs.get(i), items, weight)) break;
+					}
+					if(!Sack.IsValidState(childs.get(i), items, weight)){
+						childs.remove(i); i--;
+					}
 				}
 			}
 			//select for next gen 
 			for(int i=0; i<oldGen.size();i++){
-				Sack sack = new Sack(weight);
-				if(!sack.setState(oldGen.get(i), items)){
-					oldGen.remove(i); i--;
+				if(!Sack.IsValidState(oldGen.get(i), items, weight)){
+					//force mutate
+					for(int m=0;m<items.size();m++){
+						boolean[] xst = oldGen.get(i);
+						xst[My.rndInt(0, xst.length-1)] = false;
+						oldGen.set(i, xst);
+					}
+					if(!Sack.IsValidState(oldGen.get(i), items, weight)){
+						oldGen.remove(i); i--;
+					}
 				}
 			}
 			for(boolean[] st:lastGen){
@@ -604,29 +581,53 @@ public class myMain{
 
 			lastGen = childs;
 
-			//show current generation
-			My.cout("Population for generation "+(iters+1)+": ");
-			My.cout("> Old gen: ");
+			//evaluate old generation
+			if(oldGen.size() > MAX_CAPACITY/2){
+				My.cout("Capped oldGen at MAX CAPACITY of "+MAX_CAPACITY/2);
+				oldGen.sort(sortingAlgo);
+				ArrayList<boolean[]> temp = new ArrayList<>();
+				for(int i=0;i<MAX_CAPACITY/2;i++) temp.add(oldGen.get(i));
+
+				oldGen = temp;
+			}
+			My.cout("> Old gen: "+oldGen.size());
 			population = new ArrayList<>();
 			for(boolean[] st:oldGen){
-				My.cout(stateToString(st));
+				// My.cout(stateToString(st));
 				population.add(st);
 			}
-			My.cout("> New gen: ");
+			//evaluate new generation
+			if(lastGen.size() > MAX_CAPACITY/2){
+				My.cout("Capped newGen at MAX CAPACITY of "+MAX_CAPACITY/2);
+				lastGen.sort(sortingAlgo);
+				ArrayList<boolean[]> temp = new ArrayList<>();
+				for(int i=0;i<MAX_CAPACITY/2;i++) temp.add(lastGen.get(i));
+
+				lastGen = temp;
+			}
+			My.cout("> New gen: "+lastGen.size());
 			for(boolean[] st:lastGen){
-				My.cout(stateToString(st));
+				// My.cout(stateToString(st));
 				population.add(st);
 			}
 
-			iters ++;
+			//select current population
+			if(population.size() > MAX_CAPACITY){
+				My.cout("Capped at MAX CAPACITY of "+MAX_CAPACITY);
+				population.sort(sortingAlgo);
+				ArrayList<boolean[]> temp = new ArrayList<>();
+				for(int i=0;i<MAX_CAPACITY;i++) temp.add(population.get(i));
+
+				population = temp;
+			}
+
+			My.cout("Population for generation "+(iters++)+": "+population.size());
+
 		}
 
 		population.sort(sortingAlgo);
 
-		My.cout("Final Population:");
-		for(boolean[] st:population){
-			My.cout(stateToString(st));
-		}
+		My.cout("Final Population:" + population.size());
 
 		if(population.size()<=0) return null;
 
@@ -635,7 +636,7 @@ public class myMain{
 	}
 
 	public static class Result{
-		public HashMap<String,Object> params;
+		public HashMap<String,Object> params = new HashMap<>();
 		public String name;
 		public boolean[] finalState;
 
@@ -655,13 +656,15 @@ public class myMain{
 		public String toString(){
 			String out = "";
 
-			out += name + " : {";
+			out += name + " : {\n";
 			
 			for(String key:params.keySet()){
-				out += key + " : " +  params.get(key).toString();
+				out += key + " : " +  params.get(key).toString() + ", \n";
 			}
 
-			out += "}";
+			out += "RESULT : " + stateToString(finalState);
+
+			out += "\n}";
 
 			return out;
 		} 
@@ -669,7 +672,7 @@ public class myMain{
 
 	public static class TResult{
 		public String name;
-		public ArrayList<Result> results;
+		public ArrayList<Result> results = new ArrayList<>();
 
 		public TResult(String n){ name = n; }
 
@@ -677,10 +680,10 @@ public class myMain{
 
 		@Override
 		public String toString(){
-			String out = "[";
+			String out = "[\n";
 
 			for(Result r:results){
-				out += r.toString() + "\n";
+				out += r.toString() + ", \n";
 			}
 
 			out += "]";
@@ -713,6 +716,10 @@ public class myMain{
 			}
 
 			return paths;
+		}else if(dir.isFile()){
+			paths.add(dir.getPath());
+
+			return paths;
 		}
 
 		return null;
@@ -728,7 +735,6 @@ public class myMain{
 	}
 		
 	public static void m2(){
-
 		///settings
 
 		int popSize = 5;
@@ -738,9 +744,26 @@ public class myMain{
 
 		int colonySize = 100;
 
+		Scanner inputSc = new Scanner(System.in);
 
-		try{
-			File dir = new File("Knapsack Instances/f9_l-d_kp_5_80");
+		System.out.print("Enter PopulationSize: ");
+		int _popSize = inputSc.nextInt();
+		if(_popSize>0) popSize = _popSize;
+		System.out.print("Enter Iterations: ");
+		int _iter = inputSc.nextInt();
+		if(_iter>1) iterations = _iter;
+		System.out.print("Enter CrossOver Rate: ");
+		double _cross = inputSc.nextDouble();
+		if(_cross>0 && _cross<=1) crossOverRate = _cross;
+		System.out.print("Enter Mutation Rate: ");
+		double _mut = inputSc.nextDouble();
+		if(_mut>0 && _mut<=1) mutationRate = _mut;
+		System.out.print("Enter Colony Size: ");
+		int _col = inputSc.nextInt();
+		if(_col>1) colonySize = _col;
+
+		// try{
+			File dir = new File("Knapsack Instances/");
 			My.cout("Reading file directories from "+dir.getName()+"...");
 			ArrayList<String> paths = getFilesPaths(dir);
 			My.cout("Read file directories.");
@@ -749,7 +772,7 @@ public class myMain{
 
 			My.cout("Reading files...");
 
-			int len = (int) ((double)(paths.size()) / 2.5);
+			int len = paths.size();
 
 			ArrayList<TResult> results = new ArrayList<>();
 
@@ -767,93 +790,96 @@ public class myMain{
 					continue;
 				}
 
-				Scanner scanner = new Scanner(file);
+				Scanner scanner = null;
+				Dataset dataset = null;
 
+				int num = 0, cap = 0;
 				String name = file.getName();
 
-				String[] settings = scanner.nextLine().split(" ");
+				try{
+					scanner = new Scanner(file);
+					if(!scanner.hasNextLine()){
+						My.cout("File is lacking settings");
+						continue;
+					}
+					String[] settings = scanner.nextLine().split(" ");
+	
+					num = (Integer.parseInt(settings[0]));
+					cap = (Integer.parseInt(settings[1]));
 
-				int num = (Integer.parseInt(settings[0]));
-				int cap = (Integer.parseInt(settings[1]));
-				
-				Dataset dataset = new Dataset(cap);
-				
-				int i = 0;
-				while(scanner.hasNextLine() && i<num){
-					String[] itemSet = scanner.nextLine().split(" ");
-
-					double v = Double.parseDouble(itemSet[0]);
-					double w = Double.parseDouble(itemSet[1]);
-
-					dataset.items.add(new Item(w,v));
-					i++;
+					dataset = new Dataset(cap);
+				}catch(Exception deez){
+					My.cout(deez);
 				}
 
-				// datasets.put(name, dataset);
+				if(dataset == null){
+					My.cout("Dataset not available");
+					continue;
+				}
+				
+				
+				int i = 0;
+				try{
+					while(i<num && scanner.hasNextLine()){
+						String[] itemSet = scanner.nextLine().split(" ");
+	
+						double v = Double.parseDouble(itemSet[0]);
+						double w = Double.parseDouble(itemSet[1]);
+	
+						dataset.items.add(new Item(w,v));
+						i++;
+					}
+				}catch(Exception e){
+					My.cout("Error counting all scanner lines");
+					My.cout(e);
+				}
 
 				My.cout(name + " got read\t [" + (k+1) + " of " + len + "]");
 
-
-			// }
-
-			// My.cout("Read files.");
-
 			
-			My.cout("Using algorithms on dataset...");
+				My.cout("Using algorithms on dataset...");
+				TResult tresults = new TResult(name);
 
-			// for (int k=0; k<datasets.size(); k++) {
-			// 	String setName = datasetKeys[k];
-
-				Result res0 = new Result(name);
-
-				res0.setParam("initialPopulation", popSize);
-				res0.setParam("iterationCount", iterations);
-				res0.setParam("crossoverRate", crossOverRate);
-
-				res0.setParam("timeTaken", 0);
-
-				res0.setParam("mutationRate", mutationRate);
-				
+				Result res = new Result(name + "(GeneticAlgo)");
+				res.setParam("initialPopulation", popSize);
+				res.setParam("iterationCount", iterations);
+				res.setParam("crossoverRate", crossOverRate);
+				res.setParam("mutationRate", mutationRate);
 				Timestamp timer = new Timestamp();
 				
 				timer.start();
 				boolean[] st = geneticAlgo(dataset.items, dataset.capacity, popSize, iterations, crossOverRate,mutationRate);
-				res0.setParam("timeTaken", timer.stop() );
+				res.setParam("RUNTIME", timer.stop() );
 
-				res0.finalState = st;
+				res.finalState = st;
+				res.setParam("FITNESS", Sack.GetStateValue(st, dataset.items, dataset.capacity));
 
 				My.cout(name + "(GeneticAlgo) is complete\t [" + (k+1) + " of " + len + "]");
 
-				Result res1 = new Result(name);
+				tresults.addResult(res);
 
-				res1.setParam("initialPopulation", popSize);
-				res1.setParam("iterationCount", iterations);
-				res1.setParam("crossoverRate", crossOverRate);
+				res = new Result(name+"(AntColonyOpt)");
 
-				res1.setParam("timeTaken", 0);
-
-				res1.setParam("mutationRate", mutationRate);
-				
+				res.setParam("colonySize", colonySize);
+			
 				timer = new Timestamp();
 				
 				timer.start();
-				st = geneticAlgo(dataset.items, dataset.capacity, popSize, iterations, crossOverRate,mutationRate);
-				res1.setParam("timeTaken", timer.stop() );
+				st = antColonyOptimization(dataset.items, dataset.capacity, colonySize);
+				res.setParam("RUNTIME", timer.stop() );
 
-				res1.finalState = st;
+				res.finalState = st;
+				res.setParam("FITNESS", Sack.GetStateValue(st, dataset.items, dataset.capacity));
 
 				My.cout(name + "(AntColonyOpt) is complete\t [" + (k+1) + " of " + len + "]");
 				
-				TResult tresults = new TResult(name);
-
-				tresults.addResult(res0);
-				tresults.addResult(res1);
+				tresults.addResult(res);
 
 				results.add(tresults);
 
 			}
 
-			My.cout("Completed searches");
+			My.cout("Completed algorithms");
 			
 			ArrayList<String> strs = new ArrayList<>();
 			
@@ -871,8 +897,12 @@ public class myMain{
 			My.cout("Writing to log file...");
 
 			try{
-				File newLogFile = new File("myLogs/"+dir.getName()+".txt");
 				new File("myLogs").mkdir();
+				int c = 0;
+				File newLogFile = new File("myLogs/"+dir.getName()+".txt");
+				while(newLogFile.exists()){
+					newLogFile = new File("myLogs/"+dir.getName()+"("+(++c)+").txt");
+				}
 				newLogFile.createNewFile();
 	
 				String logStr = String.join("\n", strs);
@@ -887,20 +917,23 @@ public class myMain{
 
 
 
-		}catch(Exception err){
-			My.cout(err);
-		}
+		// }catch(Exception err){
+		// 	My.cout("Craziest thing happened");
+		// 	My.cout(err);
+		// 	My.cout(err.getStackTrace().toString());
+		// 	My.cout(err.getCause());
+		// }
 	}
 
 	public static void m1(){
-		File dir = new File("Knapsack Instances/f1_l-d_kp_10_269");
+		File dir = new File("Knapsack Instances/knapPI_1_100_1000_1");
 		My.cout("Reading file directories from "+dir.getName()+"...");
 
 		ArrayList<Item> assets = new ArrayList<>();
 
-		int numOfItems; int sackWeight;
+		int numOfItems=0; int sackWeight=0;
 
-		Sack sack;
+		Sack sack = null;
 
 		try{
 			dir = new File(dir.getPath());
@@ -921,7 +954,7 @@ public class myMain{
 			}
 			
 			int i = 0;
-			while(scanner.hasNextLine()){
+			while(i<numOfItems && scanner.hasNextLine()){
 				String asset = scanner.nextLine();
 
 				String[] items = asset.split(" ");
@@ -934,14 +967,40 @@ public class myMain{
 				i++;
 			}
 
+			
 			My.cout("Read a total of "+i+" items.");
-
 		}catch(Exception bruh){
 			My.cout("Reading "+dir.getPath()+" failed due to an error. Going to next");
+			My.cout(bruh);
 			return;
 		}
+		if(sack==null) return;
 
+
+		ArrayList<Integer> is = new ArrayList<>();
+		for(int m=0;m<assets.size();m++){
+			int x = My.rndInt(0, assets.size()-1);
+			while(is.contains(x)){
+				x = (x+1) % assets.size();
+			}
+			is.add(x);
+		}
 		
+		for(Integer m:is){
+			sack.addItem(assets.get(m));
+		}
+
+		My.cout("St: "+stateToString(sack.getState(assets)));
+		My.cout("V: "+sack.getTotalValue());
+		My.cout("W: "+sack.getCurrentWeight());
+
+		boolean[] xst = new boolean[assets.size()];
+		xst[0] = true;
+		xst[1] = true;
+
+		My.cout("XST: "+stateToString(xst));
+		My.cout("Valid?: "+Sack.IsValidState(xst, assets, sackWeight));
+		My.cout("V?: "+Sack.GetStateValue(xst, assets, sackWeight));
 
 	}
 }
