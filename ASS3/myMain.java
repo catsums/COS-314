@@ -24,29 +24,49 @@ public class myMain{
 
 		double[][] w = initMatrix(numOfInputs, numOfInst);
 		double[] b = new double[numOfInst];
-		double[] t = new double[numOfInst];
-
-		t = new double[]{-1,1};
-
+		for(int i=0;i<b.length;i++) b[i] = 0;
+		
 		My.cout(printMatrix(w));
 		
-		// double[] p = new double[]{1,-1,-1};
+		double[][] p = new double[][]{
+			{1,-1,-1},
+			{1,1,-1},
+		};
+		double[] t = new double[]{
+			-1,
+			1
+		};
 		
-		// double lRate = 1;
+		double lRate = 1;
 		
-		// for(int i=0; i<numOfInst; i++){
-		// 	double n = calcN(i, b[i], p, w);
-		// 	double fn = MCPitts(n, 0);
+		int j = 0;
+		for(int i=0; i<numOfInst; i++){
+			My.cout("i:"+i);
 			
-		// 	if(fn != t[i]){
-		// 		double[] col = getMatrixCol(w, i);
-		// 		double[] newCol = updateWeight(col, lRate, t[i],fn, p);
-				
-		// 		setMatrixCol(w, i, newCol);
-		// 	}
-		// }
+			double n = calcN(j, b[j], p[i], w);
+			double fn = MCPitts(n, 0, true);
+			
+			My.cout("n:"+n);
+			My.cout("f(n):"+fn);
+
+			if(fn != t[i]){
+				setMatrixCol(w, j, 
+					updateWeight(
+						getMatrixCol(w, j)
+					, lRate, t[i],fn, p[i])
+				);
+
+				b[j] = b[j] + lRate * (t[i] - fn);
+			}
+
+			My.cout("w:\n"+printMatrix(w));
+			My.cout("b:"+b[j]);
+			My.cout("------------");
+		}
+
 		
-		// My.cout(printMatrix(w));
+		My.cout(printMatrix(w));
+		My.cout(b[j]);
 
     }
 
@@ -88,8 +108,8 @@ public class myMain{
 		return bx;
     }
 
-	public static double MCPitts(double n, double x){
-		return (n>=x) ? 1 : 0;
+	public static double MCPitts(double n, double x, boolean bipolar){
+		return ((n>=x) ? 1 : (bipolar ? -1 : 0));
 	}
 
 	public static double ReLu(double n){
@@ -108,8 +128,8 @@ public class myMain{
 	public static double[] getMatrixRow(double[][] mat, int rowIndex){
 		if(rowIndex < 0 || rowIndex >= mat.length) return null;
 
-		double[] row = new double[mat.length];
-		for(int i=0; i<mat.length; i++){
+		double[] row = new double[mat[rowIndex].length];
+		for(int i=0; i<mat[rowIndex].length; i++){
             row[i] = mat[rowIndex][i];
         }
         return row;
@@ -128,7 +148,7 @@ public class myMain{
 		if(rowIndex < 0 || rowIndex >= mat.length) return null;
 
 		double[] row = mat[rowIndex];
-		for(int i=0; i<mat.length; i++){
+		for(int i=0; i<mat[rowIndex].length; i++){
             mat[rowIndex][i] = newRow[i];
         }
         return row;
