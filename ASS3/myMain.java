@@ -19,20 +19,42 @@ public class myMain{
         My.cout("m0");
         My.cout("---------------");
 
-		int[] size = new int[]{3,2};
+		int numOfInputs = 3;
+		int numOfInst = 2;
 
-		double[][] weights = initMatrix(size[0], size[1]);
+		double[][] w = initMatrix(numOfInst, numOfInputs);
+		double[] b = new double[numOfInst];
+		double[] t = new double[numOfInst];
 
-		double[] biases = new double[size[1]];
+		t = new double[]{-1,1};
 
-		My.cout(printMatrix(weights));
+		My.cout(printMatrix(w));
+
+		// double[] p = new double[]{1,-1,-1};
+
+		// for(int i=0; i<numOfInst; i++){
+		// 	double n = calcN(i, b[i], p, w);
+		// 	double fn = MCPitts(n, 0);
+
+		// 	if(fn != t[i]){
+		// 		w[i]
+		// 	}
+
+
+		// }
 		
 
     }
 
-	public static double calcN(int j, double b, int[] p, int[][] w){
+	public static double calcN(int j, double b, double[] p, double[][] w){
 		/*
-		*	n = SUM(w[i][j] * p[i] + b)where m = number of inputs, i = index of input
+		 * n = SUM(w[i][j] * p[i] + b)
+		 * where m = number of inputs
+		 * i = index of input/ index of row
+		 * j = col index
+		 * b = bias
+		 * p = input
+		 * w = weight matrix
 		*/
 
 		double n = 0;
@@ -43,14 +65,59 @@ public class myMain{
 
 	}
 
+	public static double[] updateWeight(double[] wi, double lRate, double t, double fn, double[] p){
+		double[] wx = new double[wi.length];
+
+		for(int i=0; i<wi.length; i++){
+			wx[i] = wi[i] + lRate * (t - fn) * p[i];
+		}
+
+		return wx;
+	}
+	public static double[] updateBias(double[] bi, double lRate, double t, double fn){
+		double[] bx = new double[bi.length];
+
+		for(int i=0; i<bi.length; i++){
+            bx[i] = bi[i] + lRate * (t - fn);
+        }
+
+		return bx;
+    }
+
+	public static double MCPitts(double n, double x){
+		return (n>=x) ? 1 : 0;
+	}
+
 	public static double ReLu(double n){
 		double x = Math.max(0, n);
 
 		return (x>=0) ? x : 0;
 	}
+	public static double Dir_ReLu(double n){
+		return (n>0) ? 1 : 0;
+	}
 
 	public static double[][] initMatrix(int rows, int cols){
 		return new double[rows][cols];
+	}
+
+	public static double[] getMatrixRow(int[][] mat, int rowIndex){
+		if(rowIndex < 0 || rowIndex >= mat.length) return null;
+
+		double[] row = new double[mat.length];
+		for(int i=0; i<mat.length; i++){
+            row[i] = mat[rowIndex][i];
+        }
+        return row;
+	}
+	public static double[] getMatrixCol(int[][] mat, int colIndex){
+		if(colIndex < 0 ||  colIndex >= mat.length) return null;
+
+		double[] col = new double[mat.length];
+		for(int i=0; i<mat.length; i++){
+            col[i] = mat[i][colIndex];
+        }
+        return col;
 	}
 
 	public static String printVector(double[] vec){
