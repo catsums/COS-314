@@ -22,7 +22,7 @@ public class myMain{
 		int numOfInputs = 3;
 		int numOfInst = 2;
 
-		double[][] w = initMatrix(numOfInst, numOfInputs);
+		double[][] w = initMatrix(numOfInputs, numOfInst);
 		double[] b = new double[numOfInst];
 		double[] t = new double[numOfInst];
 
@@ -30,27 +30,27 @@ public class myMain{
 
 		My.cout(printMatrix(w));
 		
-		double[] p = new double[]{1,-1,-1};
+		// double[] p = new double[]{1,-1,-1};
 		
-		double lRate = 1;
+		// double lRate = 1;
 		
-		for(int i=0; i<numOfInst; i++){
-			double n = calcN(i, b[i], p, w);
-			double fn = MCPitts(n, 0);
+		// for(int i=0; i<numOfInst; i++){
+		// 	double n = calcN(i, b[i], p, w);
+		// 	double fn = MCPitts(n, 0);
 			
-			if(fn != t[i]){
-				double[] col = getMatrixCol(w, i);
-				double[] newCol = updateWeight(col, lRate, t[i],fn, p);
+		// 	if(fn != t[i]){
+		// 		double[] col = getMatrixCol(w, i);
+		// 		double[] newCol = updateWeight(col, lRate, t[i],fn, p);
 				
-				setMatrixCol(w, i, newCol);
-			}
-		}
+		// 		setMatrixCol(w, i, newCol);
+		// 	}
+		// }
 		
-		My.cout(printMatrix(w));
+		// My.cout(printMatrix(w));
 
     }
 
-	public static double calcN(int j, double b, double[] p, double[][] w){
+	public static double calcN(int c, double b, double[] p, double[][] w){
 		/*
 		 * n = SUM(w[i][j] * p[i] + b)
 		 * where m = number of inputs
@@ -62,8 +62,8 @@ public class myMain{
 		*/
 
 		double n = 0;
-        for(int i=0; i<p.length; i++){
-            n += w[i][j] * p[i] + b;
+        for(int r=0; r<p.length; r++){
+            n += w[r][c] * p[r] + b;
         }
         return n;
 
