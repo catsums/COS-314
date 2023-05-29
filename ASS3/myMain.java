@@ -29,20 +29,24 @@ public class myMain{
 		t = new double[]{-1,1};
 
 		My.cout(printMatrix(w));
-
-		// double[] p = new double[]{1,-1,-1};
-
-		// for(int i=0; i<numOfInst; i++){
-		// 	double n = calcN(i, b[i], p, w);
-		// 	double fn = MCPitts(n, 0);
-
-		// 	if(fn != t[i]){
-		// 		w[i]
-		// 	}
-
-
-		// }
 		
+		double[] p = new double[]{1,-1,-1};
+		
+		double lRate = 1;
+		
+		for(int i=0; i<numOfInst; i++){
+			double n = calcN(i, b[i], p, w);
+			double fn = MCPitts(n, 0);
+			
+			if(fn != t[i]){
+				double[] col = getMatrixCol(w, i);
+				double[] newCol = updateWeight(col, lRate, t[i],fn, p);
+				
+				setMatrixCol(w, i, newCol);
+			}
+		}
+		
+		My.cout(printMatrix(w));
 
     }
 
