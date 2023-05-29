@@ -101,7 +101,7 @@ public class myMain{
 		return new double[rows][cols];
 	}
 
-	public static double[] getMatrixRow(int[][] mat, int rowIndex){
+	public static double[] getMatrixRow(double[][] mat, int rowIndex){
 		if(rowIndex < 0 || rowIndex >= mat.length) return null;
 
 		double[] row = new double[mat.length];
@@ -110,12 +110,31 @@ public class myMain{
         }
         return row;
 	}
-	public static double[] getMatrixCol(int[][] mat, int colIndex){
+	public static double[] getMatrixCol(double[][] mat, int colIndex){
 		if(colIndex < 0 ||  colIndex >= mat.length) return null;
 
 		double[] col = new double[mat.length];
 		for(int i=0; i<mat.length; i++){
             col[i] = mat[i][colIndex];
+        }
+        return col;
+	}
+
+	public static double[] setMatrixRow(double[][] mat, int rowIndex, double[] newRow){
+		if(rowIndex < 0 || rowIndex >= mat.length) return null;
+
+		double[] row = mat[rowIndex];
+		for(int i=0; i<mat.length; i++){
+            mat[rowIndex][i] = newRow[i];
+        }
+        return row;
+	}
+	public static double[] setMatrixCol(double[][] mat, int colIndex, double[] newCol){
+		if(colIndex < 0 || colIndex >= mat.length) return null;
+
+		double[] col = mat[colIndex];
+		for(int i=0; i<mat.length; i++){
+            mat[i][colIndex] = newCol[i];
         }
         return col;
 	}
@@ -133,7 +152,7 @@ public class myMain{
 	public static String printMatrix(double[][] mat){
 		String out = "";
 		for(int r=0;r<mat.length;r++){
-			double[] row = mat[r];
+			double[] row = getMatrixRow(mat, r);
 			out += printVector(row);
 			if(r<mat.length-1) out += "\n";
 		}
