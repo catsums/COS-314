@@ -177,9 +177,15 @@ public class myMain{
 			for(int l=0;l<N;l++){
 				ArrayList<Double> errInfoOuts = new ArrayList<>();
 				ArrayList<ArrayList<Double>> weightCorrs = new ArrayList<>();
+				ArrayList<Double> biasCorrsOut = new ArrayList<>();
+
+				ArrayList<Double> sumsOfDeltaInputs = new ArrayList<>();
+				ArrayList<Double> errInfoHiddens = new ArrayList<>();
+				ArrayList<Double> weightHiddens = new ArrayList<>();
 				ArrayList<Double> biasCorrs = new ArrayList<>();
+
 				for(int k=0;k<M;k++){
-					double Qk = errorInfoOutput(t[l][k], fn2.get(k), dirFn2.get(k));
+					double Qk = (t[l][k] - fn2.get(k)) * dirFn2.get(k);
 					double w0k = lRate * Qk;
 					
 					ArrayList<Double> wC = new ArrayList<>();
@@ -190,7 +196,7 @@ public class myMain{
 					}
 
 					errInfoOuts.add(Qk);
-					biasCorrs.add(w0k);
+					biasCorrsOut.add(w0k);
 
 					weightCorrs.add(wC);
 				}
@@ -200,9 +206,17 @@ public class myMain{
 					for(int k=0;k<M;k++){
 						Qni += errInfoOuts.get(k) * weightCorrs.get(k).get(i);
 					}
+
+					double Qi = Qni * dirFn1.get(i);
+					double Vli  = lRate * Qi * p[l][i];
 					
+					sumsOfDeltaInputs.add(Qni);
+					errInfoHiddens.add(Qi);
+					weightHiddens.add(Vli);
+
 				}
 
+				
 
 
 			}
