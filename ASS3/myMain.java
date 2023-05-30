@@ -30,13 +30,13 @@ public class myMain{
 			{1,-1,-1},
 			{1,1,-1},
 			{1,-1,1},
-			// {0,0,0},
+			{0,0,0},
 		};
 		double[][] t = new double[][]{
 			{-1, 1},
 			{1, -1},
 			{1, 1},
-			// {-1, -1},
+			{-1, -1},
 		};
 		
 		double lRate = 1;
@@ -44,7 +44,8 @@ public class myMain{
 		boolean conv = false;
 		int epochCount = 0;
 		int epochLimit = 100;
-		while(!conv && epochCount<epochLimit){
+		while(!conv){
+			My.cout("EPOCH "+epochCount);
 			conv = true;
 			for(int j=0; j<instSize; j++){
 				int numOfInputs = p.length;
@@ -86,7 +87,7 @@ public class myMain{
 
 		My.cout("-----------");
 
-		double[] input = new double[]{1,1,-1};
+		double[] input = new double[]{-1,-1,-1};
 		double[] output = new double[instSize];
 		for(int j=0;j<instSize;j++){	
 			double n = weightedSum(j, input, w);
@@ -202,8 +203,8 @@ public class myMain{
 		*/
 
 		double n = 0;
-        for(int r=1; r<p.length; r++){
-            n += (w[r][c] * p[r]) + w[0][c];
+        for(int r=1; r<p.length+1; r++){
+            n += w[r][c] * p[r-1] + w[0][c];
         }
         return n;
 
