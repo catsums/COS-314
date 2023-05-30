@@ -9,7 +9,7 @@ public class myMain{
 	public static void main(String[] args) throws Exception {
 		My.cout("| MAIN START |"); My.cout("---------------");
 		
-		m1();
+		m0();
 		
 		My.cout("---------------"); My.cout("| MAIN END |");
 		return;
@@ -88,7 +88,7 @@ public class myMain{
 
 		My.cout("-----------");
 
-		double[] input = new double[]{-1,-1,-1};
+		double[] input = new double[]{1,-1,1};
 		double[] output = new double[instSize];
 		for(int j=0;j<instSize;j++){	
 			double n = weightedSum(j, input, w);
@@ -139,9 +139,16 @@ public class myMain{
 		while(!conv){
 			My.cout("EPOCH "+epochCount);
 			conv = true;
-			for(int c=0; c<layers.size();c++){
-				for(int i=0; i<instSize; i++){
+			for(int c=0; c<layers.size()-1;c++){
+				double[][] W = layers.get(c);
+				double[][] V = layers.get(c+1);
+
+				int J = W.length;
+				int M = V.length;
+
+				for(int i=0; i<J; i++){
 					int N = p.length;
+
 					for(int l=0;l<N;l++){
 	
 					}
