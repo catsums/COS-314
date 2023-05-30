@@ -174,11 +174,37 @@ public class myMain{
 				dirFn2.add(_dirFn2);
 			}
 
-			ArrayList<Double> errInfoOut = new ArrayList<Double>();
 			for(int l=0;l<N;l++){
-				for(int k=0;k<M; k++){
+				ArrayList<Double> errInfoOuts = new ArrayList<>();
+				ArrayList<ArrayList<Double>> weightCorrs = new ArrayList<>();
+				ArrayList<Double> biasCorrs = new ArrayList<>();
+				for(int k=0;k<M;k++){
 					double Qk = errorInfoOutput(t[l][k], fn2.get(k), dirFn2.get(k));
+					double w0k = lRate * Qk;
+					
+					ArrayList<Double> wC = new ArrayList<>();
+					
+					for(int i=0;i<J;i++){
+						double Wik = w0k * dirFn1.get(i);
+						wC.add(Wik);
+					}
+
+					errInfoOuts.add(Qk);
+					biasCorrs.add(w0k);
+
+					weightCorrs.add(wC);
 				}
+
+				for(int i=0;i<J;i++){
+					double Qni = 0;
+					for(int k=0;k<M;k++){
+						Qni += errInfoOuts.get(k) * weightCorrs.get(k).get(i);
+					}
+					
+				}
+
+
+
 			}
 
 
@@ -218,7 +244,7 @@ public class myMain{
 	public static double errorInfoOutput(double t, double fn2, double dirFn2){
 		//Qk = (tk - f(n2k)) * f'(n2k)
 		//where k = 1 to m
-		return 0;
+		return (t - fn2) * dirFn2;
 	}
 	public static double errorInfoHidden(double[][] w, int index, double tk, double fn2k, double dirFn2k, double dirFn1i){
 		// Qi = Qni * f'(n1i)
@@ -229,11 +255,11 @@ public class myMain{
 	}
 	
 	public static double weightCorrectionOutput(double lRate, double tk, double fn2k, double dirFn2k, double fn1i){
-		// DELTA wik = lRate * Qk * f'(n1i)
-		// = lRate * ((tk - f(n2k)) * f'(n2k)) * f'(n1i)
+		// DELTA wik = lRate * Qk * f(n1i)
+		// = lRate * ((tk - f(n2k)) * f'(n2k)) * f(n1i)
 		//where k = 1 to m
 		//where i = 1 to j
-		return 0;
+		return (lRate * ((tk - fn2k) * dirFn2k) * fn1i);
 	}
 	public static double weightCorrectionHidden(double lRate, double Qi, double pl){
 		// DELTA vli = lRate * Qi * pl
