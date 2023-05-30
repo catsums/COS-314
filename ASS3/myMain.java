@@ -9,7 +9,7 @@ public class myMain{
 	public static void main(String[] args) throws Exception {
 		My.cout("| MAIN START |"); My.cout("---------------");
 		
-		m0();
+		m1();
 		
 		My.cout("---------------"); My.cout("| MAIN END |");
 		return;
@@ -47,6 +47,7 @@ public class myMain{
 		while(!conv){
 			My.cout("EPOCH "+epochCount);
 			conv = true;
+
 			for(int j=0; j<instSize; j++){
 				int numOfInputs = p.length;
 				for(int i=0; i<numOfInputs; i++){
@@ -103,16 +104,17 @@ public class myMain{
 
     }
 
-	/* public static void m1(){
-        My.cout("m0");
+	public static void m1(){
+		My.cout("m0");
         My.cout("---------------");
 
 		int inputSize = 3;
-		int instSize = 1;
+		int instSize = 2;
 
-		double[][] w = initMatrix(inputSize, instSize);
-		double[] b = new double[instSize];
-		for(int i=0;i<b.length;i++) b[i] = 0;
+		double[][] w = initMatrix(inputSize+1, instSize);
+		double[][] v = initMatrix(instSize+1, instSize);
+
+		ArrayList<double[][]> layers = new ArrayList<>();
 		
 		My.cout(printMatrix(w));
 		
@@ -135,61 +137,18 @@ public class myMain{
 		int epochCount = 0;
 		int epochLimit = 100;
 		while(!conv){
+			My.cout("EPOCH "+epochCount);
 			conv = true;
-			for(int j=0; j<instSize; j++){
-				int numOfInputs = p.length;
-				for(int i=0; i<numOfInputs; i++){
-					My.cout("i:"+i+" j:"+j);
-					
-					double n = weightedSum(j, b[j], p[i], w);
-					double fn = MCPitts(n, 0, true);
-					
-					My.cout("n:"+n);
-					My.cout("f(n):"+fn);
-		
-					if(fn != t[i][j]){
-						conv = false;
-						setMatrixCol(w, j, 
-							updateWeight(
-								getMatrixCol(w, j)
-							, lRate, t[i][j],fn, p[i])
-						);
-		
-						b[j] = b[j] + lRate * (t[i][j] - fn);
+			for(int c=0; c<layers.size();c++){
+				for(int i=0; i<instSize; i++){
+					int N = p.length;
+					for(int l=0;l<N;l++){
+	
 					}
-		
-					My.cout("w:\n"+printMatrix(w));
-					My.cout("b:"+b[j]);
-					My.cout("------------");
 				}
 			}
-			epochCount++;
 		}
-		
-
-		
-		My.cout("w:\n"+printMatrix(w));
-		My.cout("b:\n"+printVector(b));
-		// My.cout("t:\n"+printMatrix(t));
-		// My.cout("p:\n"+printMatrix(p));
-
-		My.cout("-----------");
-
-		double[] input = new double[]{1,1,1};
-		double[] output = new double[instSize];
-		for(int j=0;j<instSize;j++){	
-			double n = weightedSum(j, b[j], input, w);
-			double fn = MCPitts(n, 0, true);
-	
-			My.cout("f(n): "+fn);
-			output[j] = fn;
-		}
-		
-
-		My.cout("in: "+printVector(input));
-		My.cout("out: "+printVector(output));
-
-    } */
+	}
 
 	public static double weightedSum(int c, double[] p, double[][] w){
 		/*
