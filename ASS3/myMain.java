@@ -9,7 +9,7 @@ public class myMain{
 	public static void main(String[] args) throws Exception {
 		My.cout("| MAIN START |"); My.cout("---------------");
 		
-		m0();
+		m1();
 		
 		My.cout("---------------"); My.cout("| MAIN END |");
 		return;
@@ -114,8 +114,8 @@ public class myMain{
 		double[][] v = initMatrix(inputSize+1, instSize);
 		double[][] w = initMatrix(instSize+1, instSize);
 		
-		My.cout(printMatrix(v));
-		My.cout(printMatrix(w));
+		My.cout("V:\n"+printMatrix(v));
+		My.cout("W:\n"+printMatrix(w));
 		
 		double[][] p = new double[][]{
 			{1,-1,-1},
@@ -135,7 +135,7 @@ public class myMain{
 		boolean conv = false;
 		int epochCount = 0;
 		int epochLimit = 100;
-		while(!conv){
+		// while(!conv){
 			My.cout("EPOCH "+epochCount);
 			conv = true;
 			double[][] V = v;
@@ -156,7 +156,7 @@ public class myMain{
 			for(int l=1; l<N; l++){
 				double _n1 = 0;
 				for(int i=0; i<J; i++){
-					_n1 += V[l][i] * p[l-1][i] + V[0][i];
+					_n1 += V[i][l] * p[l-1][i] + V[i][0];
 				}
 				double _fn1 = ReLu(_n1, true);
 				double _dirFn1 = Dir_ReLu(_n1, true);
@@ -214,27 +214,30 @@ public class myMain{
 					errInfoHiddens.add(Qi);
 					double Vli  = lRate * Qi * p[l][i];
 					double v0i = lRate * Qi;
-					biasCorrsHidden.add(v0i);
-
+					
 					if(l==0){
 						wH.add(v0i);
+						biasCorrsHidden.add(v0i);
 					}else{
 						wH.add(Vli);
 					}
 
 				}
 
-				
-			}
-			for(int i=0;i<J;i++){
-				for(int k=0;k<M;k++){
-					W[k][i] += weightCorrs.get(k).get(i);
+				V[0][l] += biasCorrsHidden.get(l);
+				for(int i=1;i<J;i++){
+					W[0][i] += biasCorrsOut.get(i);
+					for(int k=1;k<M;k++){
+						W[k][i] += weightCorrs.get(k).get(i);
+					}
+					V[i][l] += wH.get(i);
 				}
-				V[i][l] += wH.get(i);
 			}
 
 
-		}
+		// }
+		My.cout("V:\n"+printMatrix(v));
+		My.cout("W:\n"+printMatrix(w));
 	}
 
 	public static double weightedSum(int c, double[] p, double[][] w){
