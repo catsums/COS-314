@@ -174,51 +174,63 @@ public class myMain{
 				dirFn2.add(_dirFn2);
 			}
 
+			ArrayList<ArrayList<Double>> weightCorrs = new ArrayList<>(); //ki
+			ArrayList<ArrayList<Double>> weightHiddens = new ArrayList<>(); //il
+			ArrayList<Double> biasCorrsOut = new ArrayList<>();
+			ArrayList<Double> biasCorrsHidden = new ArrayList<>();
 			for(int l=0;l<N;l++){
 				ArrayList<Double> errInfoOuts = new ArrayList<>();
-				ArrayList<ArrayList<Double>> weightCorrs = new ArrayList<>();
-				ArrayList<Double> biasCorrsOut = new ArrayList<>();
 
 				ArrayList<Double> sumsOfDeltaInputs = new ArrayList<>();
 				ArrayList<Double> errInfoHiddens = new ArrayList<>();
-				ArrayList<Double> weightHiddens = new ArrayList<>();
-				ArrayList<Double> biasCorrs = new ArrayList<>();
 
-				for(int k=0;k<M;k++){
-					double Qk = (t[l][k] - fn2.get(k)) * dirFn2.get(k);
+				ArrayList<Double> wH = new ArrayList<>();
+
+				for(int k=1;k<M;k++){
+					double Qk = (t[l][k-1] - fn2.get(k-1)) * dirFn2.get(k-1);
 					double w0k = lRate * Qk;
 					
 					ArrayList<Double> wC = new ArrayList<>();
 					
-					for(int i=0;i<J;i++){
-						double Wik = w0k * dirFn1.get(i);
+					wC.add(w0k);
+					for(int i=1;i<J;i++){
+						double Wik = lRate * Qk * dirFn1.get(i-1);
 						wC.add(Wik);
 					}
 
 					errInfoOuts.add(Qk);
-					biasCorrsOut.add(w0k);
-
 					weightCorrs.add(wC);
 				}
 
-				for(int i=0;i<J;i++){
+				for(int i=1;i<J;i++){
 					double Qni = 0;
-					for(int k=0;k<M;k++){
-						Qni += errInfoOuts.get(k) * weightCorrs.get(k).get(i);
+					for(int k=1;k<M;k++){
+						double Qk = errInfoOuts.get(k);
+						Qni += Qk * weightCorrs.get(k).get(i);
 					}
+					sumsOfDeltaInputs.add(Qni);
 
 					double Qi = Qni * dirFn1.get(i);
-					double Vli  = lRate * Qi * p[l][i];
-					
-					sumsOfDeltaInputs.add(Qni);
 					errInfoHiddens.add(Qi);
-					weightHiddens.add(Vli);
+					double Vli  = lRate * Qi * p[l][i];
+					double v0i = lRate * Qi;
+					biasCorrsHidden.add(v0i);
+
+					if(l==0){
+						wH.add(v0i);
+					}else{
+						wH.add(Vli);
+					}
 
 				}
 
 				
-
-
+			}
+			for(int i=0;i<J;i++){
+				for(int k=0;k<M;k++){
+					W[k][i] += weightCorrs.get(k).get(i);
+				}
+				V[i][l] += wH.get(i);
 			}
 
 
