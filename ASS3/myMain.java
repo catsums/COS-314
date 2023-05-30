@@ -111,11 +111,10 @@ public class myMain{
 		int inputSize = 3;
 		int instSize = 2;
 
-		double[][] w = initMatrix(inputSize+1, instSize);
-		double[][] v = initMatrix(instSize+1, instSize);
-
-		ArrayList<double[][]> layers = new ArrayList<>();
+		double[][] v = initMatrix(inputSize+1, instSize);
+		double[][] w = initMatrix(instSize+1, instSize);
 		
+		My.cout(printMatrix(v));
 		My.cout(printMatrix(w));
 		
 		double[][] p = new double[][]{
@@ -139,21 +138,50 @@ public class myMain{
 		while(!conv){
 			My.cout("EPOCH "+epochCount);
 			conv = true;
-			for(int c=0; c<layers.size()-1;c++){
-				double[][] W = layers.get(c);
-				double[][] V = layers.get(c+1);
+			double[][] V = v;
+			double[][] W = w;
 
-				int J = W.length;
-				int M = V.length;
+			int J = V.length;
+			int M = W.length;
 
+			ArrayList<Double> fn1 = new ArrayList<>();
+			ArrayList<Double> dirFn1 = new ArrayList<>();
+			ArrayList<Double> fn2 = new ArrayList<>();
+			ArrayList<Double> dirFn2 = new ArrayList<>();
+
+			int N = p.length;
+
+
+			/// FEEDFORWARD
+			for(int l=1; l<N; l++){
+				double _n1 = 0;
 				for(int i=0; i<J; i++){
-					int N = p.length;
+					_n1 += V[l][i] * p[l-1][i] + V[0][i];
+				}
+				double _fn1 = ReLu(_n1, true);
+				double _dirFn1 = Dir_ReLu(_n1, true);
+				fn1.add(_fn1);
+				dirFn1.add(_dirFn1);
+			}
+			for(int i=1; i<J; i++){
+				double _n2 = 0;
+				for(int k=0; k<M; k++){
+					_n2 += W[i][k] * fn1.get(i-1) + W[0][k];
+				}
+				double _fn2 = ReLu(_n2, true);
+				double _dirFn2 = Dir_ReLu(_n2, true);
+				fn2.add(_fn2);
+				dirFn2.add(_dirFn2);
+			}
 
-					for(int l=0;l<N;l++){
-	
-					}
+			ArrayList<Double> errInfoOut = new ArrayList<Double>();
+			for(int l=0;l<N;l++){
+				for(int k=0;k<M; k++){
+					double Qk = errorInfoOutput(t[l][k], fn2.get(k), dirFn2.get(k));
 				}
 			}
+
+
 		}
 	}
 
@@ -176,8 +204,8 @@ public class myMain{
 
 	}
 	
-	// w = weight matrix between inputs and hidden
-	// v = weight matrix between hidden and outputs
+	// v = weight matrix between inputs and hidden
+	// w = weight matrix between hidden and outputs
 	// j = num of nodes in hidden layer
 	// m = num of nodes in output layer
 	// n = num of inputs
@@ -276,13 +304,13 @@ public class myMain{
 		return ((n>=x) ? 1 : (bipolar ? -1 : 0));
 	}
 
-	public static double ReLu(double n){
+	public static double ReLu(double n, boolean bipolar){
 		double x = Math.max(0, n);
 
-		return (x>=0) ? x : 0;
+		return (x>=0) ? x : (bipolar ? -1 : 0);
 	}
-	public static double Dir_ReLu(double n){
-		return (n>0) ? 1 : 0;
+	public static double Dir_ReLu(double n, boolean bipolar){
+		return (n>0) ? 1 : (bipolar ? -1 : 0);
 	}
 
 	public static double[][] initMatrix(int rows, int cols){
