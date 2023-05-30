@@ -20,6 +20,93 @@ public class myMain{
         My.cout("---------------");
 
 		int inputSize = 3;
+		int instSize = 2;
+
+		double[][] w = initMatrix(inputSize+1, instSize);
+		
+		My.cout(printMatrix(w));
+		
+		double[][] p = new double[][]{
+			{1,-1,-1},
+			{1,1,-1},
+			{1,-1,1},
+			// {0,0,0},
+		};
+		double[][] t = new double[][]{
+			{-1, 1},
+			{1, -1},
+			{1, 1},
+			// {-1, -1},
+		};
+		
+		double lRate = 1;
+
+		boolean conv = false;
+		int epochCount = 0;
+		int epochLimit = 100;
+		while(!conv && epochCount<epochLimit){
+			conv = true;
+			for(int j=0; j<instSize; j++){
+				int numOfInputs = p.length;
+				for(int i=0; i<numOfInputs; i++){
+					My.cout("i:"+(i)+" j:"+j);
+
+					double _t = t[i][j];
+					double[] _p = p[i];
+
+					My.cout("t: "+_t);
+					My.cout("p: "+printVector(_p));
+					
+					double n = weightedSum(j, _p, w);
+					double fn = MCPitts(n, 0, true);
+					
+					My.cout("n:"+n);
+					My.cout("f(n):"+fn);
+		
+					if(fn != _t){
+						conv = false;
+						double[] col = getMatrixCol(w, j);
+						col = updateWeight(col, lRate, _t, fn, _p);
+						col[0] = col[0] + lRate * (_t - fn);
+						setMatrixCol(w, j, col);
+					}
+		
+					My.cout("w:\n"+printMatrix(w));
+					My.cout("------------");
+				}
+			}
+			epochCount++;
+		}
+		
+
+		
+		My.cout("w:\n"+printMatrix(w));
+		// My.cout("t:\n"+printMatrix(t));
+		// My.cout("p:\n"+printMatrix(p));
+
+		My.cout("-----------");
+
+		double[] input = new double[]{1,1,-1};
+		double[] output = new double[instSize];
+		for(int j=0;j<instSize;j++){	
+			double n = weightedSum(j, input, w);
+			double fn = MCPitts(n, 0, true);
+	
+			My.cout("f(n): "+fn);
+			output[j] = fn;
+		}
+		
+
+		My.cout("in: "+printVector(input));
+		My.cout("out: "+printVector(output));
+
+    }
+
+	/* public static void m1(){
+        My.cout("m0");
+        My.cout("---------------");
+
+		int inputSize = 3;
 		int instSize = 1;
 
 		double[][] w = initMatrix(inputSize, instSize);
@@ -101,9 +188,9 @@ public class myMain{
 		My.cout("in: "+printVector(input));
 		My.cout("out: "+printVector(output));
 
-    }
+    } */
 
-	public static double weightedSum(int c, double b, double[] p, double[][] w){
+	public static double weightedSum(int c, double[] p, double[][] w){
 		/*
 		 * n = SUM(w[i][j] * p[i] + b)
 		 * where m = number of inputs
@@ -115,24 +202,35 @@ public class myMain{
 		*/
 
 		double n = 0;
-        for(int r=0; r<p.length; r++){
-            n += w[r][c] * p[r] + b;
+        for(int r=1; r<p.length; r++){
+            n += (w[r][c] * p[r]) + w[0][c];
         }
         return n;
 
 	}
+	
+	// w = weight matrix between inputs and hidden
+	// v = weight matrix between hidden and outputs
+	// j = num of nodes in hidden layer
+	// m = num of nodes in output layer
+	// n = num of inputs
+	// i = 1...j
+	// k = 1...m
+	// l = 1...n
+	// n1j = v0j + SUM(vlj * pl) for l=1...n
+	// n2m = w0m + SUM(wim * f(n1i)) for i=1...j
 
 	public static double errorInfoOutput(double t, double fn2, double dirFn2){
 		//Qk = (tk - f(n2k)) * f'(n2k)
 		//where k = 1 to m
-		return (t - fn2) * dirFn2;
+		return 0;
 	}
 	public static double errorInfoHidden(double[][] w, int index, double tk, double fn2k, double dirFn2k, double dirFn1i){
 		// Qi = Qni * f'(n1i)
 		// = SUM( ( (tk - f(n2k) ) * f'(n2k)) * wik ) * f'(n1i)
 		//where i = 1 to j
 		//where k = 1 to m
-		return (sumOfDeltaInputs(w, index, tk, fn2k, dirFn2k) * dirFn1i);
+		return 0;
 	}
 	
 	public static double weightCorrectionOutput(double lRate, double tk, double fn2k, double dirFn2k, double fn1i){
@@ -140,33 +238,59 @@ public class myMain{
 		// = lRate * ((tk - f(n2k)) * f'(n2k)) * f'(n1i)
 		//where k = 1 to m
 		//where i = 1 to j
-		return lRate * errorInfoOutput(tk, fn2k, dirFn2k) * fn1i;
+		return 0;
+	}
+	public static double weightCorrectionHidden(double lRate, double Qi, double pl){
+		// DELTA vli = lRate * Qi * pl
+		// = lRate * (SUM( ( (tk - f(n2k) ) * f'(n2k)) * wik ) * f'(n1i)) * pl
+		//where l = 1 to n
+		//where i = 1 to j
+		return 0;
 	}
 
 	public static double biasCorrectionOutput(double lRate, double tk, double fn2k, double dirFn2k){
 		// DELTA w0k = lRate * Qk
 		// = lRate * ((tk - f(n2k)) * f'(n2k))
 		//where k = 1 to m
-		return lRate * errorInfoOutput(tk, fn2k, dirFn2k);
+		return 0;
 	}
+
+	public static double biasCorrectionHidden(double lRate){
+		// DELTA v0i = lRate * Qi
+		// = lRate * (SUM( ( (tk - f(n2k) ) * f'(n2k)) * wik ) * f'(n1i))
+		//where i = 1 to j
+
+		return 0;
+	}
+
+	public static double backPropUpdateWeights(double[] wi){
+		//wik(new) = wik(old) + DELTA wik
+		//where i = 0 to j
+		//where k = 1 to m
+		return 0;
+	}
+	public static double backPropUpdateBias(double[] vl){
+		//vli(new) = vli(old) + DELTA vli
+		// where l = 0 to n
+		// where i = 1 to j
+		return 0;
+	}
+
 
 	public static double sumOfDeltaInputs(double[][] w, int index, double tk, double fn2k, double dirFn2k){
 		// Qni = SUM(Qk * wik)
 		// = SUM( ( (tk - f(n2k) ) * f'(n2k)) * wik )
 		//where k = 1 to m
 		//where i = i to j
-		double n = 0;
-		for(int k=0; k<w[index].length; k++){
-			n += errorInfoOutput(tk, fn2k, dirFn2k) * w[index][k];
-		}
-		return n;
+		return 0;
 	}
 
 	public static double[] updateWeight(double[] wi, double lRate, double t, double fn, double[] p){
 		double[] wx = new double[wi.length];
+		wx[0] = wi[0];
 
-		for(int i=0; i<wi.length; i++){
-			wx[i] = wi[i] + lRate * (t - fn) * p[i];
+		for(int i=1; i<wi.length; i++){
+			wx[i] = wi[i] + lRate * (t - fn) * p[i-1];
 		}
 
 		return wx;
