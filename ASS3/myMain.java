@@ -108,21 +108,23 @@ public class myMain{
 		My.cout("m0");
         My.cout("---------------");
 
-		int inputSize = 3;
-		int instSize = 2;
+		int inputSize = 3; //N
+		int instSize = 2; //J
+		int outputSize = 2; //M
 
-		double[][] v = initMatrix(inputSize+1, instSize, 0.5);
-		double[][] w = initMatrix(instSize+1, instSize, 0.5);
+		double[][] v = initMatrix(inputSize+1, instSize, -0.5, 0.5);
+		double[][] w = initMatrix(instSize+1, outputSize, -0.5, 0.5);
 		
 		My.cout("V:\n"+printMatrix(v));
 		My.cout("W:\n"+printMatrix(w));
 		
+		//[number of inputs][inputSize]
 		double[][] p = new double[][]{
 			{1,-1,-1},
 			{1,1,-1},
 			{1,-1,1},
-			{0,0,0},
 		};
+		//[number of inputs][outputSize]
 		double[][] t = new double[][]{
 			{-1, 1},
 			{1, -1},
@@ -135,145 +137,195 @@ public class myMain{
 		boolean conv = false;
 		int epochCount = 0;
 		int epochLimit = 100;
-		// while(!conv){
+
+		double[][] V = v;
+		double[][] W = w;
+		
+		int N = V.length; //inputSize+1
+		int J = W.length; //instSize+1
+		int M = W[0].length; //outputSize
+
+		while(!conv){
 			My.cout("EPOCH "+epochCount);
 			conv = true;
-			double[][] V = v;
-			double[][] W = w;
-
-			int J = V[0].length;
-			int M = W[0].length;
-
 			/*
-			 * [p0, p1, p2] inputSize = 3
+			* [p0, p1, p2] (N = inputSize) [3]
 			 * 
-			 * [v00, v01] (inputSize+1, instSize)
+			 * [v00, v01] (inputSize+1, instSize) [3+1, 2]
 			 * [v10, v11]
 			 * [v20, v21]
 			 * [v30, v31]
 			 * 
-			 * [h0, h1] (J = instSize)
+			 * V [N+1,J] [l,i]
 			 * 
-			 * [w00, w01] (instSize+1, outputSize)
+			 * [h0, h1] (J = instSize) [2]
+			 * 
+			 * [w00, w01] (instSize+1, outputSize) [2+1, 2]
 			 * [w10, w11]
 			 * [w20, w21]
 			 * 
-			 * [t0, t1] (M = outputSize)
+			 * W [J+1,M] [i,k]
+			 * 
+			 * [t0, t1] (M = outputSize) [2]
 			 */
 
-			ArrayList<Double> fn1 = new ArrayList<>();
-			ArrayList<Double> dirFn1 = new ArrayList<>();
-			ArrayList<Double> fn2 = new ArrayList<>();
-			ArrayList<Double> dirFn2 = new ArrayList<>();
+			for(int c=0; c<p.length; c++){
+				double[] _p = p[c];
+				double[] _t = t[c];
 
-			int N = V.length;
-			double[] _p = p[0];
+				My.cout("p: "+printVector(_p));
 
-			My.cout("p: "+printVector(_p));
-			
-			/// FEEDFORWARD
-			for(int i=0; i<J; i++){
-				double _n1 = 0;
-				_n1 += V[0][i];
-				for(int l=1; l<N; l++){
-					_n1 += V[l][i] * _p[l-1];
-				}
-				double _fn1 = ReLu(_n1, false);
-				double _dirFn1 = Dir_ReLu(_n1, false);
-				fn1.add(_fn1);
-				dirFn1.add(_dirFn1);
-			}
-			for(int k=0; k<M; k++){
-				double _n2 = 0;
-				_n2 += W[0][k];
+				ArrayList<Double> fn1 = new ArrayList<>();
+				ArrayList<Double> dirFn1 = new ArrayList<>();
+				ArrayList<Double> fn2 = new ArrayList<>();
+				ArrayList<Double> dirFn2 = new ArrayList<>();
+				
+				/// FEEDFORWARD
+
+				//FeedForward Hidden Layer
 				for(int i=1; i<J; i++){
-					_n2 += W[i][k] * fn1.get(i-1);
+					double _n1 = 0;
+					_n1 += V[0][i-1];
+					for(int l=1; l<N; l++){
+						_n1 += V[l][i-1] * _p[l-1];
+					}
+					double _fn1 = Sigmoid(_n1, false);
+					double _dirFn1 = Dir_Sigmoid(_n1, false);
+					fn1.add(_fn1);
+					dirFn1.add(_dirFn1);
 				}
-				double _fn2 = ReLu(_n2, false);
-				double _dirFn2 = Dir_ReLu(_n2, false);
-				fn2.add(_fn2);
-				dirFn2.add(_dirFn2);
-			}
-
-			My.cout("f(n1): "+Arrays.toString(fn1.toArray()));
-			My.cout("f'(n1): "+Arrays.toString(dirFn1.toArray()));
-			My.cout("f(n2): "+Arrays.toString(fn2.toArray()));
-			My.cout("f'(n2): "+Arrays.toString(dirFn2.toArray()));
-
-			ArrayList<ArrayList<Double>> weightCorrs = new ArrayList<>(); //ki
-			ArrayList<ArrayList<Double>> weightHiddens = new ArrayList<>(); //il
-
-			ArrayList<ArrayList<Double>> errInfoOuts = new ArrayList<>();
-			ArrayList<ArrayList<Double>> errInfoHiddens = new ArrayList<>();
-			ArrayList<ArrayList<Double>> sumsOfDeltaInputs = new ArrayList<>();
-			for(int l=0;l<N;l++){
-				ArrayList<Double> errO = new ArrayList<>();
-
-				for(int k=0;k<M;k++){
-					double Qk = (t[0][k] - fn2.get(k)) * dirFn2.get(k);
-					
-					ArrayList<Double> wC = new ArrayList<>();
-					
-					for(int i=0;i<J;i++){
-						if(i==0){
-							double w0k = lRate * Qk;
-							wC.add(w0k);
+				//FeedForward Output Layer
+				for(int k=0; k<M; k++){
+					double _n2 = 0;
+					_n2 += W[0][k];
+					for(int i=1; i<J; i++){
+						_n2 += W[i][k] * fn1.get(i-1);
+					}
+					double _fn2 = Sigmoid(_n2, false);
+					double _dirFn2 = Dir_Sigmoid(_n2, false);
+					fn2.add(_fn2);
+					dirFn2.add(_dirFn2);
+				}
+	
+				// My.cout("f(n1): "+Arrays.toString(fn1.toArray()));
+				// My.cout("f'(n1): "+Arrays.toString(dirFn1.toArray()));
+				// My.cout("f(n2): "+Arrays.toString(fn2.toArray()));
+				// My.cout("f'(n2): "+Arrays.toString(dirFn2.toArray()));
+	
+				ArrayList<ArrayList<Double>> weightCorrs = new ArrayList<>(); //ki
+				ArrayList<ArrayList<Double>> weightHiddens = new ArrayList<>(); //il
+	
+				for(int l=0;l<N;l++){
+					ArrayList<Double> errO = new ArrayList<>();
+	
+					for(int k=0;k<M;k++){
+						//Calculate the error information term for each node in the output layer
+						double Qk = (_t[k] - fn2.get(k)) * dirFn2.get(k);
+						
+						ArrayList<Double> wC = new ArrayList<>();
+						
+						for(int i=0;i<J;i++){
+							if(i==0){
+								//Calculate the bias correction term for each node in the output layer
+								double w0k = lRate * Qk;
+								wC.add(w0k);
+							}else{
+								//Calculate the weight correction term for each node in the output layer
+								double Wik = lRate * Qk * dirFn1.get(i-1);
+								wC.add(Wik);
+							}
+						}
+	
+						errO.add(Qk);
+						weightCorrs.add(wC);
+					}
+	
+					// ArrayList<Double> sumDI = new ArrayList<>();
+					ArrayList<Double> errH = new ArrayList<>();
+					ArrayList<Double> wH = new ArrayList<>();
+	
+					for(int i=1;i<J;i++){
+						//Calculate the sum of delta inputs for each node in the hidden layer
+						double Qni = 0;
+						for(int k=0;k<M;k++){
+							double Qk = errO.get(k);
+							Qni += Qk * weightCorrs.get(k).get(i-1);
+						}
+						// sumDI.add(Qni);
+	
+						//Calculate the error information term for each node in the hidden layer
+						double Qi = Qni * dirFn1.get(i-1);
+						errH.add(Qi);
+						
+						if(l==0){
+							//Calculate the bias error term for each node in the hidden layer
+							double v0i = lRate * Qi;
+							wH.add(v0i);
 						}else{
-							double Wik = lRate * Qk * dirFn1.get(i-1);
-							wC.add(Wik);
+							//Calculate the weight error term for each node in the hidden layer
+							double Vli  = lRate * Qi * _p[l-1];
+							wH.add(Vli);
 						}
 					}
-
-					errO.add(Qk);
-					weightCorrs.add(wC);
+					weightHiddens.add(wH);
+	
 				}
-				// errInfoOuts.add(errO);
 
-				ArrayList<Double> sumDI = new ArrayList<>();
-				ArrayList<Double> errH = new ArrayList<>();
-				ArrayList<Double> wH = new ArrayList<>();
-
-				for(int i=0;i<J;i++){
-					double Qni = 0;
-					for(int k=1;k<=M;k++){
-						double Qk = errO.get(k-1);
-						Qni += Qk * weightCorrs.get(k-1).get(i);
-					}
-					sumDI.add(Qni);
-
-					double Qi = Qni * dirFn1.get(i);
-					errH.add(Qi);
-					
-					if(l==0){
-						double v0i = lRate * Qi;
-						wH.add(v0i);
-					}else{
-						double Vli  = lRate * Qi * _p[l-1];
-						wH.add(Vli);
+				for(int l=0;l<N;l++){
+					ArrayList<Double> vli = weightHiddens.get(l);
+					for(int i=1;i<J;i++){
+						V[l][i-1] += vli.get(i-1);
 					}
 				}
-				weightHiddens.add(wH);
-
-			}
-			
-			for(int l=0;l<N;l++){
-				ArrayList<Double> vli = weightHiddens.get(l);
-				for(int i=0;i<J;i++){
-					V[l][i] += vli.get(i);
-				}
-			}
-			
-			for(int k=0;k<M;k++){
-				ArrayList<Double> wik = weightCorrs.get(k);
-				for(int i=0;i<J;i++){
-					W[i][k] += wik.get(i);
+				
+				for(int k=0;k<M;k++){
+					ArrayList<Double> wik = weightCorrs.get(k);
+					for(int i=0;i<J;i++){
+						W[i][k] += wik.get(i);
+					}
 				}
 			}
 
-
-		// }
+		}
 		My.cout("V:\n"+printMatrix(v));
 		My.cout("W:\n"+printMatrix(w));
+
+		double[] input = new double[]{1,1,1};
+		double[] output = new double[M];
+
+		ArrayList<Double> fn1 = new ArrayList<>();
+		ArrayList<Double> dirFn1 = new ArrayList<>();
+		ArrayList<Double> fn2 = new ArrayList<>();
+		ArrayList<Double> dirFn2 = new ArrayList<>();
+		
+		for(int i=1; i<J; i++){
+			double _n1 = 0;
+			_n1 += V[0][i-1];
+			for(int l=1; l<N; l++){
+				_n1 += V[l][i-1] * input[l-1];
+			}
+			double _fn1 = Sigmoid(_n1, false);
+			double _dirFn1 = Dir_Sigmoid(_n1, false);
+			fn1.add(_fn1);
+			dirFn1.add(_dirFn1);
+		}
+		for(int k=0; k<M; k++){
+			double _n2 = 0;
+			_n2 += W[0][k];
+			for(int i=1; i<J; i++){
+				_n2 += W[i][k] * fn1.get(i-1);
+			}
+			double _fn2 = Sigmoid(_n2, false);
+			double _dirFn2 = Dir_Sigmoid(_n2, false);
+			fn2.add(_fn2);
+			dirFn2.add(_dirFn2);
+
+			output[k] = _dirFn2;
+		}
+
+		My.cout("in: "+printVector(input));
+		My.cout("out: "+printVector(output));
+
 	}
 
 	public static double weightedSum(int c, double[] p, double[][] w){
@@ -295,14 +347,14 @@ public class myMain{
 
 	}
 	
-	// v = weight matrix between inputs and hidden
-	// w = weight matrix between hidden and outputs
-	// j = num of nodes in hidden layer
-	// m = num of nodes in output layer
-	// n = num of inputs
-	// i = 1...j
-	// k = 1...m
-	// l = 1...n
+	// V = weight matrix between inputs and hidden
+	// W = weight matrix between hidden and outputs
+	// J = num of nodes in hidden layer
+	// M = num of nodes in output layer
+	// N = num of inputs
+	// i = 0...J
+	// k = 0...M
+	// l = 0...N
 	// n1j = v0j + SUM(vlj * pl) for l=1...n
 	// n2m = w0m + SUM(wim * f(n1i)) for i=1...j
 
@@ -402,6 +454,20 @@ public class myMain{
 	}
 	public static double Dir_ReLu(double n, boolean bipolar){
 		return (n>0) ? 1 : (bipolar ? -1 : 0);
+	}
+	public static double Sigmoid(double n, boolean bipolar){
+		double e_n = Math.pow(Math.E,-n);
+		if(bipolar){
+			return 2 / (1 + e_n) - 1;
+		}
+		return 1 / (1 + e_n);
+	}
+	public static double Dir_Sigmoid(double n, boolean bipolar){
+		double fn = Sigmoid(n, bipolar);
+		if(bipolar){
+			return 0.5 * (1 + fn) * (1 - fn);
+		}
+		return fn * (1 - fn);
 	}
 
 	public static double[][] initMatrix(int rows, int cols){
