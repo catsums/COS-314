@@ -114,15 +114,17 @@ public class myMain{
 		int instSize = 2; //J
 		int outputSize = 2; //M
 
-		double[][] v = initMatrix(inputSize+1, instSize, -0.5, 0.5);
+		double[][] v = initMatrix(inputSize+1, instSize, 1);
 		for(int r=0;r<v.length;r++){
 			for(int c=0;c<v[r].length;c++){
+				if(c%2==0) v[r][c] = 0.3;
 				v[r][c] = My.stepify(v[r][c], acc);
 			}
 		}
-		double[][] w = initMatrix(instSize+1, outputSize, -0.5, 0.5);
+		double[][] w = initMatrix(instSize+1, outputSize, 1);
 		for(int r=0;r<w.length;r++){
 			for(int c=0;c<w[r].length;c++){
+				if(c%2==0) w[r][c] = 0.4;
 				w[r][c] = My.stepify(v[r][c], acc);
 			}
 		}
@@ -149,7 +151,7 @@ public class myMain{
 
 		boolean conv = false;
 		int epochCount = 0;
-		int epochLimit = 100;
+		int epochLimit = 1;
 
 		double[][] V = v;
 		double[][] W = w;
@@ -184,7 +186,7 @@ public class myMain{
 
 			int setSize = p.length;
 
-			for(int c=0; c<setSize; c++){
+			for(int c=0; c<1; c++){
 				double[] _p = p[c];
 				double[] _t = t[c];
 
@@ -204,8 +206,8 @@ public class myMain{
 					for(int l=1; l<N; l++){
 						_n1 += My.stepify(V[l][i-1], acc) * My.stepify(_p[l-1], acc);
 					}
-					double _fn1 = Activate(My.stepify(_n1,acc), false);
-					double _dirFn1 = DirActivate(My.stepify(_n1,acc), false);
+					double _fn1 = Activate(My.stepify(_n1,acc), true);
+					double _dirFn1 = DirActivate(My.stepify(_n1,acc), true);
 					_fn1 = My.stepify(_fn1,acc);
 					_dirFn1 = My.stepify(_dirFn1,acc);
 
@@ -219,8 +221,8 @@ public class myMain{
 					for(int i=1; i<J; i++){
 						_n2 += My.stepify(W[i][k],acc) * FN1[i-1];
 					}
-					double _fn2 = Activate(My.stepify(_n2,acc), false);
-					double _dirFn2 = DirActivate(My.stepify(_n2,acc), false);
+					double _fn2 = Activate(My.stepify(_n2,acc), true);
+					double _dirFn2 = DirActivate(My.stepify(_n2,acc), true);
 					_fn2 = My.stepify(_fn2,acc);
 					_dirFn2 = My.stepify(_dirFn2,acc);
 
@@ -305,8 +307,8 @@ public class myMain{
 	
 				}
 
-				My.cout("weightH: \n"+printMatrix(VLI));
-				My.cout("weightO: \n"+printMatrix(WIK));
+				// My.cout("weightH: \n"+printMatrix(VLI));
+				// My.cout("weightO: \n"+printMatrix(WIK));
 
 				for(int l=0;l<N;l++){
 					for(int i=1;i<J;i++){
@@ -343,10 +345,15 @@ public class myMain{
 			for(int l=1; l<N; l++){
 				_n1 += My.stepify(V[l][i-1], acc) * My.stepify(input[l-1], acc);
 			}
-			double _fn1 = Activate(My.stepify(_n1,acc), false);
-			double _dirFn1 = DirActivate(My.stepify(_n1,acc), false);
+			double _fn1 = Activate(My.stepify(_n1,acc), true);
+			double _dirFn1 = DirActivate(My.stepify(_n1,acc), true);
 			fn1.add(My.stepify(_fn1,acc));
 			dirFn1.add(My.stepify(_dirFn1,acc));
+
+			My.cout("n1 "+i+ " :"+_n1);
+			My.cout("fn1 "+i+ " :"+_fn1);
+			My.cout("dirFn1 "+i+ " :"+_dirFn1);
+			My.cout("");
 		}
 		for(int k=0; k<M; k++){
 			double _n2 = 0;
@@ -354,12 +361,17 @@ public class myMain{
 			for(int i=1; i<J; i++){
 				_n2 += My.stepify(W[i][k],acc) * fn1.get(i-1);
 			}
-			double _fn2 = Activate(My.stepify(_n2,acc), false);
-			double _dirFn2 = DirActivate(My.stepify(_n2,acc), false);
+			double _fn2 = Activate(My.stepify(_n2,acc), true);
+			double _dirFn2 = DirActivate(My.stepify(_n2,acc), true);
 			fn2.add(My.stepify(_fn2,acc));
 			dirFn2.add(My.stepify(_dirFn2,acc));
 
 			output[k] = My.stepify(_dirFn2, acc);
+
+			My.cout("n2 "+k+ " :"+_n2);
+			My.cout("fn2 "+k+ " :"+_fn2);
+			My.cout("dirFn2 "+k+ " :"+_dirFn2);
+			My.cout("");
 		}
 
 		My.cout("in: "+printVector(input));
