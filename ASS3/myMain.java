@@ -10,7 +10,7 @@ public class myMain{
 		My.cout("| MAIN START |"); My.cout("---------------");
 		
 		m1();
-		
+
 		My.cout("---------------"); My.cout("| MAIN END |");
 		return;
 	}
@@ -105,15 +105,27 @@ public class myMain{
     }
 
 	public static void m1(){
-		My.cout("m0");
+		My.cout("m1");
         My.cout("---------------");
+
+		double acc = 0.01;
 
 		int inputSize = 3; //N
 		int instSize = 2; //J
 		int outputSize = 2; //M
 
 		double[][] v = initMatrix(inputSize+1, instSize, -0.5, 0.5);
+		for(int r=0;r<v.length;r++){
+			for(int c=0;c<v[r].length;c++){
+				v[r][c] = My.stepify(v[r][c], acc);
+			}
+		}
 		double[][] w = initMatrix(instSize+1, outputSize, -0.5, 0.5);
+		for(int r=0;r<w.length;r++){
+			for(int c=0;c<w[r].length;c++){
+				w[r][c] = My.stepify(v[r][c], acc);
+			}
+		}
 		
 		My.cout("V:\n"+printMatrix(v));
 		My.cout("W:\n"+printMatrix(w));
@@ -123,13 +135,14 @@ public class myMain{
 			{1,-1,-1},
 			{1,1,-1},
 			{1,-1,1},
+			{0,0,0},
 		};
 		//[number of inputs][outputSize]
 		double[][] t = new double[][]{
 			{-1, 1},
 			{1, -1},
 			{1, 1},
-			// {-1, -1},
+			{-1, -1},
 		};
 		
 		double lRate = 1;
@@ -145,7 +158,7 @@ public class myMain{
 		int J = W.length; //instSize+1
 		int M = W[0].length; //outputSize
 
-		while(!conv){
+		while(epochCount<epochLimit){
 			My.cout("EPOCH "+epochCount);
 			conv = true;
 			/*
@@ -169,128 +182,154 @@ public class myMain{
 			 * [t0, t1] (M = outputSize) [2]
 			 */
 
-			for(int c=0; c<p.length; c++){
+			int setSize = p.length;
+
+			for(int c=0; c<setSize; c++){
 				double[] _p = p[c];
 				double[] _t = t[c];
 
 				My.cout("p: "+printVector(_p));
 
-				ArrayList<Double> fn1 = new ArrayList<>();
-				ArrayList<Double> dirFn1 = new ArrayList<>();
-				ArrayList<Double> fn2 = new ArrayList<>();
-				ArrayList<Double> dirFn2 = new ArrayList<>();
+				double[] FN1 = new double[J-1];
+				double[] dFN1 = new double[J-1];
+				double[] FN2 = new double[M];
+				double[] dFN2 = new double[M];
 				
 				/// FEEDFORWARD
 
 				//FeedForward Hidden Layer
 				for(int i=1; i<J; i++){
 					double _n1 = 0;
-					_n1 += V[0][i-1];
+					_n1 += My.stepify(V[0][i-1], acc);
 					for(int l=1; l<N; l++){
-						_n1 += V[l][i-1] * _p[l-1];
+						_n1 += My.stepify(V[l][i-1], acc) * My.stepify(_p[l-1], acc);
 					}
-					double _fn1 = Sigmoid(_n1, false);
-					double _dirFn1 = Dir_Sigmoid(_n1, false);
-					fn1.add(_fn1);
-					dirFn1.add(_dirFn1);
+					double _fn1 = Activate(My.stepify(_n1,acc), false);
+					double _dirFn1 = DirActivate(My.stepify(_n1,acc), false);
+					_fn1 = My.stepify(_fn1,acc);
+					_dirFn1 = My.stepify(_dirFn1,acc);
+
+					FN1[i-1] = _fn1;
+					dFN1[i-1] = _dirFn1;
 				}
 				//FeedForward Output Layer
 				for(int k=0; k<M; k++){
 					double _n2 = 0;
-					_n2 += W[0][k];
+					_n2 += My.stepify(W[0][k],acc);
 					for(int i=1; i<J; i++){
-						_n2 += W[i][k] * fn1.get(i-1);
+						_n2 += My.stepify(W[i][k],acc) * FN1[i-1];
 					}
-					double _fn2 = Sigmoid(_n2, false);
-					double _dirFn2 = Dir_Sigmoid(_n2, false);
-					fn2.add(_fn2);
-					dirFn2.add(_dirFn2);
+					double _fn2 = Activate(My.stepify(_n2,acc), false);
+					double _dirFn2 = DirActivate(My.stepify(_n2,acc), false);
+					_fn2 = My.stepify(_fn2,acc);
+					_dirFn2 = My.stepify(_dirFn2,acc);
+
+					FN2[k] = _fn2;
+					dFN2[k] = _dirFn2;
 				}
+				
+				double[][] VLI = new double[N][J-1]; //li
+				double[][] WIK = new double[J][M]; //ik
+				double[] sumDI = new double[J];
 	
-				// My.cout("f(n1): "+Arrays.toString(fn1.toArray()));
-				// My.cout("f'(n1): "+Arrays.toString(dirFn1.toArray()));
-				// My.cout("f(n2): "+Arrays.toString(fn2.toArray()));
-				// My.cout("f'(n2): "+Arrays.toString(dirFn2.toArray()));
-	
-				ArrayList<ArrayList<Double>> weightCorrs = new ArrayList<>(); //ki
-				ArrayList<ArrayList<Double>> weightHiddens = new ArrayList<>(); //il
-	
-				for(int l=0;l<N;l++){
-					ArrayList<Double> errO = new ArrayList<>();
-	
+				for(int i=0;i<J;i++){
+					double Qni = 0;
+
 					for(int k=0;k<M;k++){
 						//Calculate the error information term for each node in the output layer
-						double Qk = (_t[k] - fn2.get(k)) * dirFn2.get(k);
-						
-						ArrayList<Double> wC = new ArrayList<>();
-						
-						for(int i=0;i<J;i++){
-							if(i==0){
-								//Calculate the bias correction term for each node in the output layer
-								double w0k = lRate * Qk;
-								wC.add(w0k);
-							}else{
-								//Calculate the weight correction term for each node in the output layer
-								double Wik = lRate * Qk * dirFn1.get(i-1);
-								wC.add(Wik);
-							}
+						//Qk = (tk - f(n2k)) * f'(n2k)
+						//where k = 1 to m
+						double Qk = (_t[k] - FN2[k]) * dFN2[k];
+						Qk = My.stepify(Qk,acc);
+
+						if(i==0){
+							//Calculate the bias correction term for each node in the output layer
+							// DELTA w0k = lRate * Qk
+							//where k = 1 to m
+							double w0k = lRate * Qk;
+							w0k = My.stepify(w0k, acc);
+
+							WIK[0][k] = w0k;
+						}else{
+							//Calculate the weight correction term for each node in the output layer
+							// DELTA wik = lRate * Qk * f(n1i)
+							//where l = 1 to n
+							//where i = 1 to j
+							double Wik = lRate * Qk * FN1[i-1];
+							Wik = My.stepify(Wik, acc);
+							
+							WIK[i][k] = Wik;
+
+							//Calculate the sum of delta inputs for each node in the hidden layer
+							// Qni = SUM(Qk * wik)
+							//where k = 1 to m
+							//where i = 0 to j-1
+							Qni += Qk * Wik;
 						}
-	
-						errO.add(Qk);
-						weightCorrs.add(wC);
+
+
 					}
-	
-					// ArrayList<Double> sumDI = new ArrayList<>();
-					ArrayList<Double> errH = new ArrayList<>();
-					ArrayList<Double> wH = new ArrayList<>();
+					Qni = My.stepify(Qni,acc);
+					sumDI[i] = Qni;
+				}
+				for(int l=0;l<N;l++){
 	
 					for(int i=1;i<J;i++){
-						//Calculate the sum of delta inputs for each node in the hidden layer
-						double Qni = 0;
-						for(int k=0;k<M;k++){
-							double Qk = errO.get(k);
-							Qni += Qk * weightCorrs.get(k).get(i-1);
-						}
-						// sumDI.add(Qni);
+
+						double Qni = sumDI[i-1];
 	
 						//Calculate the error information term for each node in the hidden layer
-						double Qi = Qni * dirFn1.get(i-1);
-						errH.add(Qi);
+						// Qi = Qni * f'(n1i)
+						//where i = 0 to j-1
+						double Qi = Qni * dFN1[i-1];
 						
 						if(l==0){
 							//Calculate the bias error term for each node in the hidden layer
+							// DELTA v0i = lRate * Qi
+							//where i = 0 to j-1
 							double v0i = lRate * Qi;
-							wH.add(v0i);
+							v0i = My.stepify(v0i,acc);
+
+							VLI[0][i-1] = v0i;
 						}else{
 							//Calculate the weight error term for each node in the hidden layer
+							// DELTA vli = lRate * Qi * pl
+							//where l = 1 to n
+							//where i = 0 to j-1
 							double Vli  = lRate * Qi * _p[l-1];
-							wH.add(Vli);
+							Vli = My.stepify(Vli,acc);
+
+							VLI[l][i-1] = Vli;
 						}
 					}
-					weightHiddens.add(wH);
 	
 				}
 
+				My.cout("weightH: \n"+printMatrix(VLI));
+				My.cout("weightO: \n"+printMatrix(WIK));
+
 				for(int l=0;l<N;l++){
-					ArrayList<Double> vli = weightHiddens.get(l);
 					for(int i=1;i<J;i++){
-						V[l][i-1] += vli.get(i-1);
+						V[l][i-1] += VLI[l][i-1];
+						V[l][i-1] = My.stepify(V[l][i-1],acc);
+					}
+				}
+				for(int i=0;i<J;i++){
+					for(int k=0;k<M;k++){
+						W[i][k] += WIK[i][k];
+						W[i][k] = My.stepify(W[i][k],acc);
 					}
 				}
 				
-				for(int k=0;k<M;k++){
-					ArrayList<Double> wik = weightCorrs.get(k);
-					for(int i=0;i<J;i++){
-						W[i][k] += wik.get(i);
-					}
-				}
 			}
+
+			epochCount++;
 
 		}
 		My.cout("V:\n"+printMatrix(v));
 		My.cout("W:\n"+printMatrix(w));
 
-		double[] input = new double[]{1,1,1};
+		double[] input = new double[]{1,-1,-1};
 		double[] output = new double[M];
 
 		ArrayList<Double> fn1 = new ArrayList<>();
@@ -300,27 +339,27 @@ public class myMain{
 		
 		for(int i=1; i<J; i++){
 			double _n1 = 0;
-			_n1 += V[0][i-1];
+			_n1 += My.stepify(V[0][i-1], acc);
 			for(int l=1; l<N; l++){
-				_n1 += V[l][i-1] * input[l-1];
+				_n1 += My.stepify(V[l][i-1], acc) * My.stepify(input[l-1], acc);
 			}
-			double _fn1 = Sigmoid(_n1, false);
-			double _dirFn1 = Dir_Sigmoid(_n1, false);
-			fn1.add(_fn1);
-			dirFn1.add(_dirFn1);
+			double _fn1 = Activate(My.stepify(_n1,acc), false);
+			double _dirFn1 = DirActivate(My.stepify(_n1,acc), false);
+			fn1.add(My.stepify(_fn1,acc));
+			dirFn1.add(My.stepify(_dirFn1,acc));
 		}
 		for(int k=0; k<M; k++){
 			double _n2 = 0;
-			_n2 += W[0][k];
+			_n2 += My.stepify(W[0][k],acc);
 			for(int i=1; i<J; i++){
-				_n2 += W[i][k] * fn1.get(i-1);
+				_n2 += My.stepify(W[i][k],acc) * fn1.get(i-1);
 			}
-			double _fn2 = Sigmoid(_n2, false);
-			double _dirFn2 = Dir_Sigmoid(_n2, false);
-			fn2.add(_fn2);
-			dirFn2.add(_dirFn2);
+			double _fn2 = Activate(My.stepify(_n2,acc), false);
+			double _dirFn2 = DirActivate(My.stepify(_n2,acc), false);
+			fn2.add(My.stepify(_fn2,acc));
+			dirFn2.add(My.stepify(_dirFn2,acc));
 
-			output[k] = _dirFn2;
+			output[k] = My.stepify(_dirFn2, acc);
 		}
 
 		My.cout("in: "+printVector(input));
@@ -442,6 +481,25 @@ public class myMain{
 
 		return bx;
     }
+
+	public static double Activate(double n, boolean bipolar){
+		String func = "relu";
+		switch(func){
+			case "mcpitts": return MCPitts(n, 0, bipolar);
+			case "relu": return ReLu(n, bipolar);
+			case "sigmoid": return Sigmoid(n, bipolar);
+			default: return 1;
+		}
+	}
+	public static double DirActivate(double n, boolean bipolar){
+		String func = "relu";
+		switch(func){
+			case "mcpitts": return MCPitts(n, 0, bipolar);
+			case "relu": return Dir_ReLu(n, bipolar);
+			case "sigmoid": return Dir_Sigmoid(n, bipolar);
+			default: return 1;
+		}
+	}
 
 	public static double MCPitts(double n, double x, boolean bipolar){
 		return ((n>=x) ? 1 : (bipolar ? -1 : 0));
