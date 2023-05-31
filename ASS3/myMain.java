@@ -151,7 +151,7 @@ public class myMain{
 
 		boolean conv = false;
 		int epochCount = 0;
-		int epochLimit = 10;
+		int epochLimit = 2;
 
 		double[][] V = v;
 		double[][] W = w;
