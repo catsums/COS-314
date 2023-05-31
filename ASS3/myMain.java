@@ -108,7 +108,7 @@ public class myMain{
 		My.cout("m1");
         My.cout("---------------");
 
-		double acc = 0.1;
+		double acc = 0.01;
 
 		int inputSize = 3; //N
 		int instSize = 2; //J
@@ -137,13 +137,17 @@ public class myMain{
 			{1,-1,-1},
 			{1,1,-1},
 			{1,-1,1},
-			{0,0,0},
+			{1,0,0},
+			{0,1,0},
+			{0,0,1},
 		};
 		//[number of inputs][outputSize]
 		double[][] t = new double[][]{
 			{-1, 1},
 			{1, -1},
 			{1, 1},
+			{-1, -1},
+			{-1, -1},
 			{-1, -1},
 		};
 		
@@ -349,7 +353,7 @@ public class myMain{
 		My.cout("V:\n"+printMatrix(v));
 		My.cout("W:\n"+printMatrix(w));
 
-		double[] input = p[1];
+		double[] input = p[0];
 		double[] output = new double[M];
 
 		ArrayList<Double> fn1 = new ArrayList<>();
