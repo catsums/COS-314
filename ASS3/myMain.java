@@ -168,7 +168,7 @@ public class myMain{
 		double[] lastdFN2 = new double[M];
 
 		while(!conv && epochCount<epochLimit){
-			My.cout("EPOCH "+epochCount);
+			// My.cout("EPOCH "+epochCount);
 			conv = true;
 			/*
 			* [p0, p1, p2] (N = inputSize) [3]
