@@ -285,7 +285,8 @@ public class myMain{
 							// Qni = SUM(Qk * wik)
 							//where k = 1 to m
 							//where i = 0 to j-1
-							Qni += Qk * Wik;
+							// Qni += Qk * Wik;
+							Qni += Qk * W[i][k];
 						}
 
 
