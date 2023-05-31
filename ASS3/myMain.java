@@ -356,11 +356,14 @@ public class myMain{
 		double[] input = p[0];
 		double[] output = new double[M];
 
-		ArrayList<Double> fn1 = new ArrayList<>();
-		ArrayList<Double> dirFn1 = new ArrayList<>();
-		ArrayList<Double> fn2 = new ArrayList<>();
-		ArrayList<Double> dirFn2 = new ArrayList<>();
+		double[] FN1 = new double[J-1];
+		double[] dFN1 = new double[J-1];
+		double[] FN2 = new double[M];
+		double[] dFN2 = new double[M];
 		
+		/// FEEDFORWARD
+
+		//FeedForward Hidden Layer
 		for(int i=1; i<J; i++){
 			double _n1 = 0;
 			_n1 += My.stepify(V[0][i-1], acc);
@@ -369,31 +372,28 @@ public class myMain{
 			}
 			double _fn1 = Activate(My.stepify(_n1,acc), true);
 			double _dirFn1 = DirActivate(My.stepify(_n1,acc), true);
-			fn1.add(My.stepify(_fn1,acc));
-			dirFn1.add(My.stepify(_dirFn1,acc));
+			_fn1 = My.stepify(_fn1,acc);
+			_dirFn1 = My.stepify(_dirFn1,acc);
 
-			My.cout("n1 "+i+ " :"+_n1);
-			My.cout("fn1 "+i+ " :"+_fn1);
-			My.cout("dirFn1 "+i+ " :"+_dirFn1);
-			My.cout("");
+			FN1[i-1] = _fn1;
+			dFN1[i-1] = _dirFn1;
 		}
+		//FeedForward Output Layer
 		for(int k=0; k<M; k++){
 			double _n2 = 0;
 			_n2 += My.stepify(W[0][k],acc);
 			for(int i=1; i<J; i++){
-				_n2 += My.stepify(W[i][k],acc) * fn1.get(i-1);
+				_n2 += My.stepify(W[i][k],acc) * FN1[i-1];
 			}
 			double _fn2 = Activate(My.stepify(_n2,acc), true);
 			double _dirFn2 = DirActivate(My.stepify(_n2,acc), true);
-			fn2.add(My.stepify(_fn2,acc));
-			dirFn2.add(My.stepify(_dirFn2,acc));
+			_fn2 = My.stepify(_fn2,acc);
+			_dirFn2 = My.stepify(_dirFn2,acc);
 
-			output[k] = My.stepify(_dirFn2, acc);
+			FN2[k] = _fn2;
+			dFN2[k] = _dirFn2;
 
-			My.cout("n2 "+k+ " :"+_n2);
-			My.cout("fn2 "+k+ " :"+_fn2);
-			My.cout("dirFn2 "+k+ " :"+_dirFn2);
-			My.cout("");
+			output[k] = _dirFn2;
 		}
 
 		My.cout("in: "+printVector(input));
