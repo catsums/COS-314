@@ -14,7 +14,7 @@ public class myMain{
 
 		My.cout("a: \n"+printMatrix(a));
 		My.cout("b: \n"+printMatrix(b));
-		My.cout(Arrays.equals(a,b));
+		My.cout(Arrays.deepEquals(a,b));
 
 		// m1();
 
