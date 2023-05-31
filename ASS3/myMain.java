@@ -16,6 +16,10 @@ public class myMain{
 		My.cout("b: \n"+printMatrix(b));
 		My.cout(Arrays.deepEquals(a,b));
 
+
+
+		My.cout(Arrays.deepEquals(a,b));
+
 		// m1();
 
 		My.cout("---------------"); My.cout("| MAIN END |");
