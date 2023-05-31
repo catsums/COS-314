@@ -151,7 +151,7 @@ public class myMain{
 
 		boolean conv = false;
 		int epochCount = 0;
-		int epochLimit = 100;
+		int epochLimit = 1000;
 
 		double[][] V = v;
 		double[][] W = w;
@@ -160,7 +160,7 @@ public class myMain{
 		int J = W.length; //instSize+1
 		int M = W[0].length; //outputSize
 
-		while(epochCount<epochLimit){
+		while(!conv && epochCount<epochLimit){
 			My.cout("EPOCH "+epochCount);
 			conv = true;
 			/*
@@ -190,7 +190,7 @@ public class myMain{
 				double[] _p = p[c];
 				double[] _t = t[c];
 
-				My.cout("p: "+printVector(_p));
+				// My.cout("p: "+printVector(_p));
 
 				double[] FN1 = new double[J-1];
 				double[] dFN1 = new double[J-1];
