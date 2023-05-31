@@ -9,7 +9,14 @@ public class myMain{
 	public static void main(String[] args) throws Exception {
 		My.cout("| MAIN START |"); My.cout("---------------");
 		
-		m1();
+		double[][] a = initMatrix(3, 4, 0.1);
+		double[][] b = initMatrix(3, 4, 0.1);
+
+		My.cout("a: \n"+printMatrix(a));
+		My.cout("b: \n"+printMatrix(b));
+		My.cout(a.hashCode() == b.hashCode());
+
+		// m1();
 
 		My.cout("---------------"); My.cout("| MAIN END |");
 		return;
