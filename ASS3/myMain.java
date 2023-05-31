@@ -108,7 +108,7 @@ public class myMain{
 		My.cout("m1");
         My.cout("---------------");
 
-		double acc = 0.01;
+		double acc = 0.1;
 
 		int inputSize = 3; //N
 		int instSize = 2; //J
