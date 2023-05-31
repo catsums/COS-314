@@ -115,16 +115,16 @@ public class myMain{
 		int outputSize = 2; //M
 
 		double[][] v = initMatrix(inputSize+1, instSize, 0.25);
-		for(int r=0;r<v.length;r++){
+		for(int r=1;r<v.length;r++){
 			for(int c=0;c<v[r].length;c++){
-				if(c%2==0) v[r][c] = 0.5;
+				if(c%2==0) v[r][c] = -1;
 				v[r][c] = My.stepify(v[r][c], acc);
 			}
 		}
 		double[][] w = initMatrix(instSize+1, outputSize, 0.45);
-		for(int r=0;r<w.length;r++){
+		for(int r=1;r<w.length;r++){
 			for(int c=0;c<w[r].length;c++){
-				if(c%2==0) w[r][c] = 0.5;
+				if(c%2==0) w[r][c] = -1;
 				w[r][c] = My.stepify(v[r][c], acc);
 			}
 		}
