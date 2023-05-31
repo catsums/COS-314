@@ -167,9 +167,6 @@ public class myMain{
 		double[] lastdFN1 = new double[J-1];
 		double[] lastdFN2 = new double[M];
 
-		double[][] prevVLI = new double[N][J-1]; //li
-		double[][] prevWIK = new double[J][M]; //ik
-
 		while(!conv && epochCount<epochLimit){
 			// My.cout("EPOCH "+epochCount);
 			conv = true;
@@ -238,6 +235,18 @@ public class myMain{
 
 					FN2[k] = _fn2;
 					dFN2[k] = _dirFn2;
+				}
+
+				//if the FNs did not change from last time, then theres convergence
+				if(
+					Arrays.equals(dFN1, lastdFN1) && 
+					Arrays.equals(dFN2, lastdFN2)
+				){
+					// My.cout("convergence");
+					continue;
+				}else{
+					// My.cout("not Conv");
+					conv = false;
 				}
 				
 				double[][] VLI = new double[N][J-1]; //li
@@ -320,21 +329,6 @@ public class myMain{
 				// My.cout("weightH: \n"+printMatrix(VLI));
 				// My.cout("weightO: \n"+printMatrix(WIK));
 
-				//if the FNs did not change from last time, then theres convergence
-				if(
-					Arrays.deepEquals(VLI, prevVLI) && 
-					Arrays.deepEquals(WIK, prevWIK) 
-				){
-					// My.cout("convergence");
-					continue;
-				}else{
-					// My.cout("not Conv");
-					conv = false;
-
-					prevVLI = VLI;
-					prevWIK = WIK;
-				}
-
 				for(int l=0;l<N;l++){
 					for(int i=1;i<J;i++){
 						V[l][i-1] += VLI[l][i-1];
@@ -347,6 +341,9 @@ public class myMain{
 						W[i][k] = My.stepify(W[i][k],acc);
 					}
 				}
+
+				lastdFN1 = dFN1;
+				lastdFN2 = dFN2;
 				
 			}
 
