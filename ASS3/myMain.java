@@ -117,7 +117,7 @@ public class myMain{
 		double[][] v = initMatrix(inputSize+1, instSize, 1);
 		for(int r=0;r<v.length;r++){
 			for(int c=0;c<v[r].length;c++){
-				if(c%2==0) v[r][c] = 2;
+				if(c%2==0) v[r][c] = -1;
 				v[r][c] = My.stepify(v[r][c], acc);
 			}
 		}
