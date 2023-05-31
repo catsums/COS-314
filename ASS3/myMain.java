@@ -331,7 +331,7 @@ public class myMain{
 		My.cout("V:\n"+printMatrix(v));
 		My.cout("W:\n"+printMatrix(w));
 
-		double[] input = p[2];
+		double[] input = p[0];
 		double[] output = new double[M];
 
 		ArrayList<Double> fn1 = new ArrayList<>();
