@@ -336,6 +336,9 @@ public class myMain{
 						W[i][k] = My.stepify(W[i][k],acc);
 					}
 				}
+
+				lastdFN1 = dFN1;
+				lastdFN2 = dFN2;
 				
 			}
 
@@ -345,7 +348,7 @@ public class myMain{
 		My.cout("V:\n"+printMatrix(v));
 		My.cout("W:\n"+printMatrix(w));
 
-		double[] input = p[0];
+		double[] input = p[1];
 		double[] output = new double[M];
 
 		ArrayList<Double> fn1 = new ArrayList<>();
