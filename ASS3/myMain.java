@@ -396,6 +396,11 @@ public class myMain{
 			output[k] = _dirFn2;
 		}
 
+		My.cout("FN1: "+printVector(FN1));
+		My.cout("dFN1: "+printVector(dFN1));
+		My.cout("FN2: "+printVector(FN2));
+		My.cout("dFN2: "+printVector(dFN2));
+		My.cout("");
 		My.cout("in: "+printVector(input));
 		My.cout("out: "+printVector(output));
 
