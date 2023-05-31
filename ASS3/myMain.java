@@ -137,7 +137,7 @@ public class myMain{
 			{1,-1,-1},
 			{1,1,-1},
 			{1,-1,1},
-			{1,1,1},
+			// {1,1,1},
 			// {-1,-1,-1},
 			// {-1,1,1},
 		};
@@ -146,7 +146,7 @@ public class myMain{
 			{-1, 1},
 			{1, -1},
 			{1, 1},
-			{-1, -1},
+			// {-1, -1},
 			// {-1, -1},
 			// {-1, -1},
 		};
@@ -155,7 +155,7 @@ public class myMain{
 
 		boolean conv = false;
 		int epochCount = 0;
-		int epochLimit = 1000;
+		int epochLimit = 10000;
 
 		double[][] V = v;
 		double[][] W = w;
@@ -245,7 +245,7 @@ public class myMain{
 					My.cout("convergence");
 					continue;
 				}else{
-					My.cout("not Conv");
+					// My.cout("not Conv");
 					conv = false;
 				}
 				
