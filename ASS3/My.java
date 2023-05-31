@@ -275,6 +275,26 @@ public class My{
 		Random rnd = new Random();
 		return rnd.nextInt(max - min + 1) + min;
 	}
+	
+	public static double stepify(double value, double step){
+		if(step == 0) return value;
+		if(step == Double.POSITIVE_INFINITY) return 1;
+		
+		double _step = (1/step);
+		return Math.round((value) * _step) / _step;
+	}
+	public static float stepify(float value, float step){
+		if(step == 0) return value;
+		if(step == Float.POSITIVE_INFINITY) return 1;
+
+		return Math.round((value + Math.ulp(1)) / step) * step;
+	}
+
+	// function stepify(value, step) {
+	// 	if (step == 0) return value;
+	// 	if (step == Infinity) return 1;
+	// 	return Math.round((value + Number.EPSILON) / step) * step;
+	//   }
 
 	// public static <T> ArrayList<T> deepClone(ArrayList<T> arr){
 	// 	ArrayList<T> newArr = new ArrayList<T>();
