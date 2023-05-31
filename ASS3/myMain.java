@@ -111,8 +111,8 @@ public class myMain{
 		int inputSize = 3;
 		int instSize = 2;
 
-		double[][] v = initMatrix(inputSize+1, instSize);
-		double[][] w = initMatrix(instSize+1, instSize);
+		double[][] v = initMatrix(inputSize+1, instSize, 0.5);
+		double[][] w = initMatrix(instSize+1, instSize, 0.5);
 		
 		My.cout("V:\n"+printMatrix(v));
 		My.cout("W:\n"+printMatrix(w));
@@ -127,7 +127,7 @@ public class myMain{
 			{-1, 1},
 			{1, -1},
 			{1, 1},
-			{-1, -1},
+			// {-1, -1},
 		};
 		
 		double lRate = 1;
@@ -141,96 +141,132 @@ public class myMain{
 			double[][] V = v;
 			double[][] W = w;
 
-			int J = V.length;
-			int M = W.length;
+			int J = V[0].length;
+			int M = W[0].length;
+
+			/*
+			 * [p0, p1, p2] inputSize = 3
+			 * 
+			 * [v00, v01] (inputSize+1, instSize)
+			 * [v10, v11]
+			 * [v20, v21]
+			 * [v30, v31]
+			 * 
+			 * [h0, h1] (J = instSize)
+			 * 
+			 * [w00, w01] (instSize+1, outputSize)
+			 * [w10, w11]
+			 * [w20, w21]
+			 * 
+			 * [t0, t1] (M = outputSize)
+			 */
 
 			ArrayList<Double> fn1 = new ArrayList<>();
 			ArrayList<Double> dirFn1 = new ArrayList<>();
 			ArrayList<Double> fn2 = new ArrayList<>();
 			ArrayList<Double> dirFn2 = new ArrayList<>();
 
-			int N = p.length;
+			int N = V.length;
+			double[] _p = p[0];
 
-
+			My.cout("p: "+printVector(_p));
+			
 			/// FEEDFORWARD
-			for(int l=1; l<N; l++){
+			for(int i=0; i<J; i++){
 				double _n1 = 0;
-				for(int i=0; i<J; i++){
-					_n1 += V[i][l] * p[l-1][i] + V[i][0];
+				_n1 += V[0][i];
+				for(int l=1; l<N; l++){
+					_n1 += V[l][i] * _p[l-1];
 				}
-				double _fn1 = ReLu(_n1, true);
-				double _dirFn1 = Dir_ReLu(_n1, true);
+				double _fn1 = ReLu(_n1, false);
+				double _dirFn1 = Dir_ReLu(_n1, false);
 				fn1.add(_fn1);
 				dirFn1.add(_dirFn1);
 			}
-			for(int i=1; i<J; i++){
+			for(int k=0; k<M; k++){
 				double _n2 = 0;
-				for(int k=0; k<M; k++){
-					_n2 += W[i][k] * fn1.get(i-1) + W[0][k];
+				_n2 += W[0][k];
+				for(int i=1; i<J; i++){
+					_n2 += W[i][k] * fn1.get(i-1);
 				}
-				double _fn2 = ReLu(_n2, true);
-				double _dirFn2 = Dir_ReLu(_n2, true);
+				double _fn2 = ReLu(_n2, false);
+				double _dirFn2 = Dir_ReLu(_n2, false);
 				fn2.add(_fn2);
 				dirFn2.add(_dirFn2);
 			}
 
+			My.cout("f(n1): "+Arrays.toString(fn1.toArray()));
+			My.cout("f'(n1): "+Arrays.toString(dirFn1.toArray()));
+			My.cout("f(n2): "+Arrays.toString(fn2.toArray()));
+			My.cout("f'(n2): "+Arrays.toString(dirFn2.toArray()));
+
 			ArrayList<ArrayList<Double>> weightCorrs = new ArrayList<>(); //ki
 			ArrayList<ArrayList<Double>> weightHiddens = new ArrayList<>(); //il
-			ArrayList<Double> biasCorrsOut = new ArrayList<>();
-			ArrayList<Double> biasCorrsHidden = new ArrayList<>();
+
+			ArrayList<ArrayList<Double>> errInfoOuts = new ArrayList<>();
+			ArrayList<ArrayList<Double>> errInfoHiddens = new ArrayList<>();
+			ArrayList<ArrayList<Double>> sumsOfDeltaInputs = new ArrayList<>();
 			for(int l=0;l<N;l++){
-				ArrayList<Double> errInfoOuts = new ArrayList<>();
+				ArrayList<Double> errO = new ArrayList<>();
 
-				ArrayList<Double> sumsOfDeltaInputs = new ArrayList<>();
-				ArrayList<Double> errInfoHiddens = new ArrayList<>();
-
-				ArrayList<Double> wH = new ArrayList<>();
-
-				for(int k=1;k<M;k++){
-					double Qk = (t[l][k-1] - fn2.get(k-1)) * dirFn2.get(k-1);
-					double w0k = lRate * Qk;
+				for(int k=0;k<M;k++){
+					double Qk = (t[0][k] - fn2.get(k)) * dirFn2.get(k);
 					
 					ArrayList<Double> wC = new ArrayList<>();
 					
-					wC.add(w0k);
-					for(int i=1;i<J;i++){
-						double Wik = lRate * Qk * dirFn1.get(i-1);
-						wC.add(Wik);
+					for(int i=0;i<J;i++){
+						if(i==0){
+							double w0k = lRate * Qk;
+							wC.add(w0k);
+						}else{
+							double Wik = lRate * Qk * dirFn1.get(i-1);
+							wC.add(Wik);
+						}
 					}
 
-					errInfoOuts.add(Qk);
+					errO.add(Qk);
 					weightCorrs.add(wC);
 				}
+				// errInfoOuts.add(errO);
 
-				for(int i=1;i<J;i++){
+				ArrayList<Double> sumDI = new ArrayList<>();
+				ArrayList<Double> errH = new ArrayList<>();
+				ArrayList<Double> wH = new ArrayList<>();
+
+				for(int i=0;i<J;i++){
 					double Qni = 0;
-					for(int k=1;k<M;k++){
-						double Qk = errInfoOuts.get(k);
-						Qni += Qk * weightCorrs.get(k).get(i);
+					for(int k=1;k<=M;k++){
+						double Qk = errO.get(k-1);
+						Qni += Qk * weightCorrs.get(k-1).get(i);
 					}
-					sumsOfDeltaInputs.add(Qni);
+					sumDI.add(Qni);
 
 					double Qi = Qni * dirFn1.get(i);
-					errInfoHiddens.add(Qi);
-					double Vli  = lRate * Qi * p[l][i];
-					double v0i = lRate * Qi;
+					errH.add(Qi);
 					
 					if(l==0){
+						double v0i = lRate * Qi;
 						wH.add(v0i);
-						biasCorrsHidden.add(v0i);
 					}else{
+						double Vli  = lRate * Qi * _p[l-1];
 						wH.add(Vli);
 					}
-
 				}
+				weightHiddens.add(wH);
 
-				V[0][l] += biasCorrsHidden.get(l);
-				for(int i=1;i<J;i++){
-					W[0][i] += biasCorrsOut.get(i);
-					for(int k=1;k<M;k++){
-						W[k][i] += weightCorrs.get(k).get(i);
-					}
-					V[i][l] += wH.get(i);
+			}
+			
+			for(int l=0;l<N;l++){
+				ArrayList<Double> vli = weightHiddens.get(l);
+				for(int i=0;i<J;i++){
+					V[l][i] += vli.get(i);
+				}
+			}
+			
+			for(int k=0;k<M;k++){
+				ArrayList<Double> wik = weightCorrs.get(k);
+				for(int i=0;i<J;i++){
+					W[i][k] += wik.get(i);
 				}
 			}
 
@@ -370,6 +406,28 @@ public class myMain{
 
 	public static double[][] initMatrix(int rows, int cols){
 		return new double[rows][cols];
+	}
+	public static double[][] initMatrix(int rows, int cols, double rs){
+		double[][] mat = initMatrix(rows, cols);
+
+		for(int r=0;r<rows;r++){
+			for(int c=0;c<cols;c++){
+				mat[r][c] = rs;
+			}
+		}
+
+		return mat;
+	}
+	public static double[][] initMatrix(int rows, int cols, double rx, double ry){
+		double[][] mat = initMatrix(rows, cols);
+
+		for(int r=0;r<rows;r++){
+			for(int c=0;c<cols;c++){
+				mat[r][c] = My.rndDouble(rx, ry);
+			}
+		}
+
+		return mat;
 	}
 
 	public static double[] getMatrixRow(double[][] mat, int rowIndex){
