@@ -528,7 +528,7 @@ public class myMain{
     }
 
 	public static double Activate(double n, boolean bipolar){
-		String func = "sigmoid";
+		String func = "relu";
 		switch(func){
 			case "mcpitts": return MCPitts(n, 0, bipolar);
 			case "relu": return ReLu(n, bipolar);
@@ -537,7 +537,7 @@ public class myMain{
 		}
 	}
 	public static double DirActivate(double n, boolean bipolar){
-		String func = "sigmoid";
+		String func = "relu";
 		switch(func){
 			case "mcpitts": return MCPitts(n, 0, bipolar);
 			case "relu": return Dir_ReLu(n, bipolar);
