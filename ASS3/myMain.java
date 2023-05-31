@@ -14,7 +14,7 @@ public class myMain{
 
 		My.cout("a: \n"+printMatrix(a));
 		My.cout("b: \n"+printMatrix(b));
-		My.cout(a.hashCode() == b.hashCode());
+		My.cout(Arrays.equals(a,b));
 
 		// m1();
 
