@@ -242,7 +242,7 @@ public class myMain{
 					Arrays.equals(dFN1, lastdFN1) && 
 					Arrays.equals(dFN2, lastdFN2)
 				){
-					// My.cout("convergence");
+					My.cout("convergence");
 					continue;
 				}else{
 					// My.cout("not Conv");
