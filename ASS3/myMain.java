@@ -108,7 +108,7 @@ public class myMain{
 		My.cout("m1");
         My.cout("---------------");
 
-		double acc = 0.1;
+		double acc = 0.01;
 
 		int inputSize = 3; //N
 		int instSize = 2; //J
@@ -151,7 +151,7 @@ public class myMain{
 
 		boolean conv = false;
 		int epochCount = 0;
-		int epochLimit = 10;
+		int epochLimit = 5;
 
 		double[][] V = v;
 		double[][] W = w;
