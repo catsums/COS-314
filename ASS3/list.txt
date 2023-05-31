@@ -1,0 +1,10 @@
+- FEEDFORWARD
+	- LOOK AT THE FORMULAS LOOK AT THESE TO KNOW WHAT THE ABBREVIATIONS MEAN:
+	// V = weight matrix between inputs and hidden
+	// W = weight matrix between hidden and outputs
+	// J = num of nodes in hidden layer
+	// M = num of nodes in output layer
+	// N = num of inputs
+	// i = 0...J
+	// k = 0...M
+	// l = 0...N

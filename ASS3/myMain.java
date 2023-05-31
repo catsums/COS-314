@@ -233,6 +233,7 @@ public class myMain{
 					dFN2[k] = _dirFn2;
 				}
 
+				//if the FNs did not change from last time, then theres convergence
 				if(
 					Arrays.equals(dFN1, lastdFN1) && 
 					Arrays.equals(dFN2, lastdFN2)
