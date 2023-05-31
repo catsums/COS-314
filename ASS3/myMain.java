@@ -155,7 +155,7 @@ public class myMain{
 
 		boolean conv = false;
 		int epochCount = 0;
-		int epochLimit = 10000;
+		int epochLimit = 100000;
 
 		double[][] V = v;
 		double[][] W = w;
@@ -242,7 +242,7 @@ public class myMain{
 					Arrays.equals(dFN1, lastdFN1) && 
 					Arrays.equals(dFN2, lastdFN2)
 				){
-					My.cout("convergence");
+					// My.cout("convergence");
 					continue;
 				}else{
 					// My.cout("not Conv");
@@ -356,8 +356,10 @@ public class myMain{
 		double[] input = p[0];
 		double[] output = new double[M];
 
+		double[] N1 = new double[J-1];
 		double[] FN1 = new double[J-1];
 		double[] dFN1 = new double[J-1];
+		double[] N2 = new double[M];
 		double[] FN2 = new double[M];
 		double[] dFN2 = new double[M];
 		
@@ -375,6 +377,7 @@ public class myMain{
 			_fn1 = My.stepify(_fn1,acc);
 			_dirFn1 = My.stepify(_dirFn1,acc);
 
+			N1[i-1] = _n1;
 			FN1[i-1] = _fn1;
 			dFN1[i-1] = _dirFn1;
 		}
@@ -390,14 +393,17 @@ public class myMain{
 			_fn2 = My.stepify(_fn2,acc);
 			_dirFn2 = My.stepify(_dirFn2,acc);
 
+			N1[k] = _n2;
 			FN2[k] = _fn2;
 			dFN2[k] = _dirFn2;
 
 			output[k] = _dirFn2;
 		}
 
+		My.cout("N1: "+printVector(N1));
 		My.cout("FN1: "+printVector(FN1));
 		My.cout("dFN1: "+printVector(dFN1));
+		My.cout("N2: "+printVector(N2));
 		My.cout("FN2: "+printVector(FN2));
 		My.cout("dFN2: "+printVector(dFN2));
 		My.cout("");
