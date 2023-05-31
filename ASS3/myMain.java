@@ -137,14 +137,14 @@ public class myMain{
 			{1,-1,-1},
 			{1,1,-1},
 			{1,-1,1},
-			{0,0,0},
+			// {0,0,0},
 		};
 		//[number of inputs][outputSize]
 		double[][] t = new double[][]{
 			{-1, 1},
 			{1, -1},
 			{1, 1},
-			{-1, -1},
+			// {-1, -1},
 		};
 		
 		double lRate = 1;
@@ -331,7 +331,7 @@ public class myMain{
 		My.cout("V:\n"+printMatrix(v));
 		My.cout("W:\n"+printMatrix(w));
 
-		double[] input = p[3];
+		double[] input = p[0];
 		double[] output = new double[M];
 
 		ArrayList<Double> fn1 = new ArrayList<>();
