@@ -160,6 +160,9 @@ public class myMain{
 		int J = W.length; //instSize+1
 		int M = W[0].length; //outputSize
 
+		double[] lastdFN1 = new double[J-1];
+		double[] lastdFN2 = new double[M];
+
 		while(!conv && epochCount<epochLimit){
 			My.cout("EPOCH "+epochCount);
 			conv = true;
@@ -228,6 +231,15 @@ public class myMain{
 
 					FN2[k] = _fn2;
 					dFN2[k] = _dirFn2;
+				}
+
+				if(
+					Arrays.equals(dFN1, lastdFN1) && 
+					Arrays.equals(dFN2, lastdFN2)
+				){
+					continue;
+				}else{
+					conv = false;
 				}
 				
 				double[][] VLI = new double[N][J-1]; //li
