@@ -137,14 +137,14 @@ public class myMain{
 			{1,-1,-1},
 			{1,1,-1},
 			{1,-1,1},
-			// {0,0,0},
+			{0,0,0},
 		};
 		//[number of inputs][outputSize]
 		double[][] t = new double[][]{
 			{-1, 1},
 			{1, -1},
 			{1, 1},
-			// {-1, -1},
+			{-1, -1},
 		};
 		
 		double lRate = 1;
@@ -238,9 +238,10 @@ public class myMain{
 					Arrays.equals(dFN1, lastdFN1) && 
 					Arrays.equals(dFN2, lastdFN2)
 				){
-					My.cout("CONVERGENCE");
+					My.cout("convergence");
 					continue;
 				}else{
+					My.cout("not Conv");
 					conv = false;
 				}
 				
