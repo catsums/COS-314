@@ -186,7 +186,7 @@ public class myMain{
 
 			int setSize = p.length;
 
-			for(int c=0; c<1; c++){
+			for(int c=0; c<setSize; c++){
 				double[] _p = p[c];
 				double[] _t = t[c];
 
