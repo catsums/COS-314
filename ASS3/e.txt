@@ -1,0 +1,12 @@
+Qk = (tk - f(n2k)) * f'(n2k)
+
+Qi = Qni * f'(n1i) = SUM(Qk * Wik)
+
+^Wik = lRate * Qk * f(n1i)
+
+Qk = (gEp/gf(n2k))*(gf(n2k)/gnk)
+
+^Wik = lRate * (gE/gf(n2k)) * (gf(n2k)/gnk) *(gxn/gWik) = lRate * (gE/gWik)
+
+^Vli = lRate * Qi * pl
+

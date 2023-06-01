@@ -418,26 +418,30 @@ public class myMain{
 
 		//[number of inputs][inputSize]
 		double[][] p = new double[][]{
-			{1,0,0},
-			{1,1,0},
-			{1,0,1},
-			// {1,1,1},
+			{1,-1,-1},
+			{1,1,-1},
+			{1,-1,1},
+			{1,1,1},
+			// {-1,-1,-1},
 		};
 		//[number of inputs][outputSize]
 		double[][] t = new double[][]{
-			{0, 1},
-			{1, 0},
+			{-1, 1},
+			{1, -1},
 			{1, 1},
+			{-1, -1},
 			// {-1, -1},
 		};
-		int[] layerSizes = {p[0].length,2,2, t[0].length}; // {input, hidden...., output}
+		int[] layerSizes = {p[0].length,4,2, t[0].length}; // {input, hidden...., output}
 
-		String[] activationFuncs = {"sigmoid", "sigmoid", "sigmoid"};
+		String[] activationFuncs = {"sigmoid", "sigmoid", "sigmoid", "relu"};
 
 		double[][][] tensor = new double[layerSizes.length-1][][];
 
-		double acc = 0.001;
+		double acc = 0.01;
 
+		double lRate = 0.69;
+		boolean isBipolar = true;
 		// int inputSize = 3; //N
 		// int instSize = 2; //J
 		// int outputSize = 2; //M
@@ -445,7 +449,7 @@ public class myMain{
 			int rows = layerSizes[en] + 1;
 			int cols = layerSizes[en+1];
 
-			double[][] mat = initMatrix(rows, cols, -0.25, 0.25);
+			double[][] mat = initMatrix(rows, cols, 0);
 			for(int r=0;r<mat.length;r++){
 				for(int c=0;c<mat[r].length;c++){
 					// if(r==0) mat[r][c] = 1;
@@ -456,16 +460,16 @@ public class myMain{
 			My.cout("M"+en+": "+printMatrix(mat));
 		}
 		
-		double lRate = 1;
-		boolean isBipolar = false;
 
 		boolean conv = false;
 		int epochCount = 0;
-		int epochLimit = 100;
+		int epochLimit = 420;
 		
 		while(!conv && epochCount<epochLimit){
 			// My.cout("EPOCH "+epochCount);
 			conv = true;
+			// lRate = My.rndDouble(0.1, 1);
+
 			/*
 			* [p0, p1, p2] (N-1 = inputSize) [3]
 			* 
@@ -490,7 +494,7 @@ public class myMain{
 			int setSize = p.length;
 			
 			double[][] prev_FN = new double[tensor.length][];
-			double[][] prev_dFN = new double[tensor.length][];
+			// double[][] prev_dFN = new double[tensor.length][];
 			for(int c=0; c<setSize; c++){
 				// double[][] V = tensor[layerCount];
 				// double[][] W = tensor[layerCount+1];
@@ -545,8 +549,7 @@ public class myMain{
 
 				//if the FNs did not change from last time, then theres convergence
 				if(
-					Arrays.deepEquals(FN, prev_FN) && 
-					Arrays.deepEquals(dFN, prev_dFN)
+					Arrays.deepEquals(FN, prev_FN)
 				){
 					// My.cout("convergence");
 					continue;
@@ -554,19 +557,19 @@ public class myMain{
 					// My.cout("not Conv");
 					conv = false;
 					prev_FN = FN;
-					prev_dFN = dFN;
+					// prev_dFN = dFN;
 				}
 
-				for(int e=tensor.length-1; e>0; e--){
-					double[][] W = tensor[e];
+				for(int e=tensor.length-1;e>0; e--){
 					double[][] V = tensor[e-1];
+					double[][] W = tensor[e];
 					int N = V.length;
 					int J = W.length;
 					int M = W[0].length;
 
 					double[] FN1 = FN[e-1];
-					double[] FN2 = FN[e];
 					double[] dFN1 = dFN[e-1];
+					double[] FN2 = FN[e];
 					double[] dFN2 = dFN[e];
 
 					double[][] VLI = new double[N][J-1]; //li
@@ -574,16 +577,26 @@ public class myMain{
 					double[] sumDI = new double[J];
 
 					for(int i=0;i<J;i++){
-						double Qni = 0;
 	
 						for(int k=0;k<M;k++){
 							//Calculate the error information term for each node in the output layer
 							//Qk = (tk - f(n2k)) * f'(n2k)
 							//where k = 1 to m
-							double Qk = (_t[k] - FN2[k]) * dFN2[k];
-							// My.cout("tk: "+_t[k]);
-							// My.cout("FN2k: "+FN2[k]);
-							// My.cout("Qk: "+Qk);
+							
+							double[] postFN = _t;
+							// if(e<tensor.length-1) postFN = FN[e+1];
+
+							// My.cout("kM: "+k+" / "+M);
+							// My.cout("iJ: "+i+" / "+J);
+							// My.cout("e: "+e);
+							// My.cout("postFN: "+postFN.length);
+							// My.cout("postFN: "+printVector(postFN));
+							// My.cout("FN2: "+FN2.length);
+							// My.cout("FN2: "+printVector(FN2));
+							// My.cout("FN1: "+printVector(FN1));
+							// My.cout("dFN2: "+dFN2.length);
+
+							double Qk = (postFN[k] - FN2[k]) * dFN2[k];
 							
 							if(i==0){
 								//Calculate the bias correction term for each node in the output layer
@@ -600,23 +613,38 @@ public class myMain{
 								//where l = 1 to n
 								//where i = 1 to j
 								double Wik = lRate * Qk * FN1[i-1];
-								// My.cout("FN1i: "+FN1[i-1]);
-								// My.cout("Wik: "+Wik);
 								
 								WIK[i][k] = Wik;
 	
-								//Calculate the sum of delta inputs for each node in the hidden layer
-								// Qni = SUM(Qk * wik)
-								//where k = 1 to m
-								//where i = 0 to j-1
-								// Qni += Qk * Wik;
-								Qni += Qk * W[i][k];
+								
 							}
-	
-	
+							
+							
+						}
+					}
+					
+					//Update weights in the output layer
+					for(int i=0;i<J;i++){
+						for(int k=0;k<M;k++){
+							W[i][k] += WIK[i][k];
+							W[i][k] = My.stepify(W[i][k],acc);
+						}
+					}
+					
+					//Calculate the sum of delta inputs for each node in the hidden layer
+					// Qni = SUM(Qk * wik)
+					//where k = 1 to m
+					//where i = 0 to j-1
+					for(int i=0;i<J;i++){
+						double Qni = 0;
+						for(int k=0;k<M;k++){
+							double Qk = (_t[k] - FN2[k]) * dFN2[k];
+							Qni += Qk * W[i][k];
+							// Qni += Qk * WIK;
 						}
 						sumDI[i] = Qni;
 					}
+
 					for(int l=0;l<N;l++){
 						for(int i=1;i<J;i++){
 							double Qni = sumDI[i-1];
@@ -638,7 +666,10 @@ public class myMain{
 								// DELTA vli = lRate * Qi * pl
 								//where l = 1 to n
 								//where i = 0 to j-1
-								double Vli  = lRate * Qi * _p[l-1];
+								double[] preFN = _p;
+								if(e-1>0) preFN = FN[e-2];
+
+								double Vli  = lRate * Qi * preFN[l-1];
 	
 								VLI[l][i-1] = Vli;
 							}
@@ -649,16 +680,11 @@ public class myMain{
 					// My.cout("weightH: \n"+printMatrix(VLI));
 					// My.cout("weightO: \n"+printMatrix(WIK));
 	
+					//Update weights in the hidder layer
 					for(int l=0;l<N;l++){
 						for(int i=1;i<J;i++){
 							V[l][i-1] += VLI[l][i-1];
 							V[l][i-1] = My.stepify(V[l][i-1],acc);
-						}
-					}
-					for(int i=0;i<J;i++){
-						for(int k=0;k<M;k++){
-							W[i][k] += WIK[i][k];
-							W[i][k] = My.stepify(W[i][k],acc);
 						}
 					}
 				}
@@ -666,8 +692,9 @@ public class myMain{
 			}
 
 			epochCount++;
-
 		}
+		My.cout("Took "+epochCount+" epochs");
+		My.cout("");
 		My.cout("");
 		for(int e=0;e<tensor.length;e++){
 			double[][] mat = tensor[e];
@@ -682,20 +709,27 @@ public class myMain{
 
 		/// TESTING NETWORK
 
-		for(int _p=0;_p<p.length;_p++){
-			double[] input = p[_p];
+		double[][] tests = {
+			{1,-1,-1}, //{-1,1}
+			{1,1,-1}, //{1,-1}
+			{1,-1,1}, //{1,1}
+			{-1,-1,-1}, //{-1,1}
+			{1,1,1}, //{-1,-1}
+		};
+
+		for(int _p=0;_p<tests.length;_p++){
+			double[] input = tests[_p];
 			double[] output = new double[t[0].length];
+			double[] outputDIR = new double[t[0].length];
 
 			double[][] eN = new double[tensor.length][];
 			double[][] FN = new double[tensor.length][];
-			double[][] dFN = new double[tensor.length][];
 	
 			for(int e=0; e<tensor.length; e++){
 				double[][] V = tensor[e];
 				int N = V.length;
 				int J = V[0].length;
 				FN[e] = new double[J];
-				dFN[e] = new double[J];
 				eN[e] = new double[J];
 
 				double[] preFN = input;
@@ -712,26 +746,25 @@ public class myMain{
 					}
 
 					double _fn = Activate(_n, activationFuncs[e], isBipolar);
-					double _dirFn = DirActivate(_n, activationFuncs[e], isBipolar);
 					_fn = My.stepify(_fn,acc);
-					_dirFn = My.stepify(_dirFn,acc);
 
 					eN[e][i] = _n;
 					FN[e][i] = _fn;
-					dFN[e][i] = _dirFn;
 
 					if(e==tensor.length-1){
-						output[i] = _dirFn;
+						output[i] = ReLu(_n, isBipolar);
+						outputDIR[i] = Dir_ReLu(_n, isBipolar);
 					}
 				}
-				My.cout("N"+e+": "+printVector(eN[e]));
-				My.cout("FN"+e+": "+printVector(FN[e]));
-				My.cout("dFN"+e+": "+printVector(dFN[e]));
-				My.cout("");
+				// My.cout("N"+e+": "+printVector(eN[e]));
+				// My.cout("FN"+e+": "+printVector(FN[e]));
+				// My.cout("dFN"+e+": "+printVector(dFN[e]));
+				// My.cout("");
 			}
 			My.cout("");
 			My.cout("in: "+printVector(input));
 			My.cout("out: "+printVector(output));
+			My.cout("outDIR: "+printVector(outputDIR));
 			My.cout("");
 
 		}
