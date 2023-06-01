@@ -416,76 +416,67 @@ public class myMain{
 		My.cout("m2");
         My.cout("---------------");
 
-		double acc = 0.01;
-
-		int inputSize = 2; //N
-		int instSize = 2; //J
-		int outputSize = 1; //M
-
-		double[][] v = initMatrix(inputSize+1, instSize, -0.25, 0.25);
-		for(int r=1;r<v.length;r++){
-			for(int c=0;c<v[r].length;c++){
-				// if(c%2==0) v[r][c] = -1;
-				v[r][c] = My.stepify(v[r][c], acc);
-			}
-		}
-		double[][] w = initMatrix(instSize+1, outputSize, -0.45, 0.45);
-		for(int r=1;r<w.length;r++){
-			for(int c=0;c<w[r].length;c++){
-				// if(c%2==0) w[r][c] = -1;
-				w[r][c] = My.stepify(v[r][c], acc);
-			}
-		}
-		
-		My.cout("V:\n"+printMatrix(v));
-		My.cout("W:\n"+printMatrix(w));
-		
 		//[number of inputs][inputSize]
 		double[][] p = new double[][]{
-			{0,0},
-			{0,1},
-			{1,0},
-			{1,1},
+			{1,0,0},
+			{1,1,0},
+			{1,0,1},
+			// {1,1,1},
 		};
 		//[number of inputs][outputSize]
 		double[][] t = new double[][]{
-			{0},
-			{1},
-			{0},
-			{0},
+			{0, 1},
+			{1, 0},
+			{1, 1},
+			// {-1, -1},
 		};
+		int[] layerSizes = {p[0].length,2,2, t[0].length}; // {input, hidden...., output}
+
+		String[] activationFuncs = {"sigmoid", "sigmoid", "sigmoid"};
+
+		double[][][] tensor = new double[layerSizes.length-1][][];
+
+		double acc = 0.001;
+
+		// int inputSize = 3; //N
+		// int instSize = 2; //J
+		// int outputSize = 2; //M
+		for(int en=0; en<tensor.length; en++){
+			int rows = layerSizes[en] + 1;
+			int cols = layerSizes[en+1];
+
+			double[][] mat = initMatrix(rows, cols, -0.25, 0.25);
+			for(int r=0;r<mat.length;r++){
+				for(int c=0;c<mat[r].length;c++){
+					// if(r==0) mat[r][c] = 1;
+					mat[r][c] = My.stepify(mat[r][c], acc);
+				}
+			}
+			tensor[en] = mat;
+			My.cout("M"+en+": "+printMatrix(mat));
+		}
 		
 		double lRate = 1;
 		boolean isBipolar = false;
 
 		boolean conv = false;
 		int epochCount = 0;
-		int epochLimit = 100000;
-
-		double[][] V = v;
-		double[][] W = w;
+		int epochLimit = 100;
 		
-		int N = V.length; //inputSize+1
-		int J = W.length; //instSize+1
-		int M = W[0].length; //outputSize
-
-		double[] lastdFN1 = new double[J-1];
-		double[] lastdFN2 = new double[M];
-
 		while(!conv && epochCount<epochLimit){
 			// My.cout("EPOCH "+epochCount);
 			conv = true;
 			/*
-			* [p0, p1, p2] (N = inputSize) [3]
-			 * 
-			 * [v00, v01] (inputSize+1, instSize) [3+1, 2]
-			 * [v10, v11]
+			* [p0, p1, p2] (N-1 = inputSize) [3]
+			* 
+			* [v00, v01] (inputSize+1, instSize) [3+1, 2]
+			* [v10, v11]
 			 * [v20, v21]
 			 * [v30, v31]
 			 * 
 			 * V [N+1,J] [l,i]
 			 * 
-			 * [h0, h1] (J = instSize) [2]
+			 * [h0, h1] (J-1 = instSize) [2]
 			 * 
 			 * [w00, w01] (instSize+1, outputSize) [2+1, 2]
 			 * [w10, w11]
@@ -495,226 +486,256 @@ public class myMain{
 			 * 
 			 * [t0, t1] (M = outputSize) [2]
 			 */
-
+			
 			int setSize = p.length;
-
+			
+			double[][] prev_FN = new double[tensor.length][];
+			double[][] prev_dFN = new double[tensor.length][];
 			for(int c=0; c<setSize; c++){
+				// double[][] V = tensor[layerCount];
+				// double[][] W = tensor[layerCount+1];
+				
+				// int N = V.length; //inputSize+1
+				// int J = W.length; //instSize+1
+				// int M = W[0].length; //outputSize
+
 				double[] _p = p[c];
 				double[] _t = t[c];
 
 				// My.cout("p: "+printVector(_p));
 
-				double[] FN1 = new double[J-1];
-				double[] dFN1 = new double[J-1];
-				double[] FN2 = new double[M];
-				double[] dFN2 = new double[M];
+				// double[] FN1 = new double[J-1];
+				// double[] dFN1 = new double[J-1];
+				// double[] FN2 = new double[M];
+				// double[] dFN2 = new double[M];
+
+				double[][] FN = new double[tensor.length][];
+				double[][] dFN = new double[tensor.length][];
 				
 				/// FEEDFORWARD
 
-				//FeedForward Hidden Layer
-				for(int i=1; i<J; i++){
-					double _n1 = V[0][i-1];
+				for(int e=0; e<tensor.length; e++){
+					double[][] V = tensor[e];
+					int N = V.length;
+					int J = V[0].length;
+					FN[e] = new double[J];
+					dFN[e] = new double[J];
 
-					for(int l=1; l<N; l++){
-						_n1 += My.stepify(V[l][i-1], acc) * My.stepify(_p[l-1], acc);
+					double[] preFN = _p;
+
+					if(e>0){
+						preFN = FN[e-1];
 					}
-					double _fn1 = Activate(My.stepify(_n1,acc), isBipolar);
-					double _dirFn1 = DirActivate(My.stepify(_n1,acc), isBipolar);
-					_fn1 = My.stepify(_fn1,acc);
-					_dirFn1 = My.stepify(_dirFn1,acc);
 
-					FN1[i-1] = _fn1;
-					dFN1[i-1] = _dirFn1;
-				}
-				//FeedForward Output Layer
-				for(int k=0; k<M; k++){
-					double _n2 = W[0][k];
-
-					for(int i=1; i<J; i++){
-						_n2 += My.stepify(W[i][k],acc) * FN1[i-1];
+					for(int i=0; i<J; i++){
+						double _n = V[0][i];
+	
+						for(int l=1; l<N; l++){
+							_n += V[l][i] * preFN[l-1];
+						}
+						double _fn = Activate(_n, activationFuncs[e], isBipolar);
+						double _dirFn = DirActivate(_n, activationFuncs[e], isBipolar);
+						_fn = My.stepify(_fn,acc);
+						_dirFn = My.stepify(_dirFn,acc);
+	
+						FN[e][i] = _fn;
+						dFN[e][i] = _dirFn;
 					}
-					double _fn2 = Activate(My.stepify(_n2,acc), isBipolar);
-					double _dirFn2 = DirActivate(My.stepify(_n2,acc), isBipolar);
-					_fn2 = My.stepify(_fn2,acc);
-					_dirFn2 = My.stepify(_dirFn2,acc);
-
-					FN2[k] = _fn2;
-					dFN2[k] = _dirFn2;
 				}
 
 				//if the FNs did not change from last time, then theres convergence
 				if(
-					Arrays.equals(dFN1, lastdFN1) && 
-					Arrays.equals(dFN2, lastdFN2)
+					Arrays.deepEquals(FN, prev_FN) && 
+					Arrays.deepEquals(dFN, prev_dFN)
 				){
 					// My.cout("convergence");
 					continue;
 				}else{
 					// My.cout("not Conv");
 					conv = false;
+					prev_FN = FN;
+					prev_dFN = dFN;
 				}
-				
-				double[][] VLI = new double[N][J-1]; //li
-				double[][] WIK = new double[J][M]; //ik
-				double[] sumDI = new double[J];
+
+				for(int e=tensor.length-1; e>0; e--){
+					double[][] W = tensor[e];
+					double[][] V = tensor[e-1];
+					int N = V.length;
+					int J = W.length;
+					int M = W[0].length;
+
+					double[] FN1 = FN[e-1];
+					double[] FN2 = FN[e];
+					double[] dFN1 = dFN[e-1];
+					double[] dFN2 = dFN[e];
+
+					double[][] VLI = new double[N][J-1]; //li
+					double[][] WIK = new double[J][M]; //ik
+					double[] sumDI = new double[J];
+
+					for(int i=0;i<J;i++){
+						double Qni = 0;
 	
-				for(int i=0;i<J;i++){
-					double Qni = 0;
-
-					for(int k=0;k<M;k++){
-						//Calculate the error information term for each node in the output layer
-						//Qk = (tk - f(n2k)) * f'(n2k)
-						//where k = 1 to m
-						double Qk = (_t[k] - FN2[k]) * dFN2[k];
-						Qk = My.stepify(Qk,acc);
-
-						if(i==0){
-							//Calculate the bias correction term for each node in the output layer
-							// DELTA w0k = lRate * Qk
+						for(int k=0;k<M;k++){
+							//Calculate the error information term for each node in the output layer
+							//Qk = (tk - f(n2k)) * f'(n2k)
 							//where k = 1 to m
-							double w0k = lRate * Qk;
-							w0k = My.stepify(w0k, acc);
-
-							WIK[0][k] = w0k;
-						}else{
-							//Calculate the weight correction term for each node in the output layer
-							// DELTA wik = lRate * Qk * f(n1i)
-							//where l = 1 to n
-							//where i = 1 to j
-							double Wik = lRate * Qk * FN1[i-1];
-							Wik = My.stepify(Wik, acc);
+							double Qk = (_t[k] - FN2[k]) * dFN2[k];
+							// My.cout("tk: "+_t[k]);
+							// My.cout("FN2k: "+FN2[k]);
+							// My.cout("Qk: "+Qk);
 							
-							WIK[i][k] = Wik;
-
-							//Calculate the sum of delta inputs for each node in the hidden layer
-							// Qni = SUM(Qk * wik)
-							//where k = 1 to m
-							//where i = 0 to j-1
-							// Qni += Qk * Wik;
-							Qni += Qk * W[i][k];
+							if(i==0){
+								//Calculate the bias correction term for each node in the output layer
+								// DELTA w0k = lRate * Qk
+								//where k = 1 to m
+								double w0k = lRate * Qk;
+	
+								WIK[0][k] = w0k;
+	
+								// Qni += Qk * W[0][k];
+							}else{
+								//Calculate the weight correction term for each node in the output layer
+								// DELTA wik = lRate * Qk * f(n1i)
+								//where l = 1 to n
+								//where i = 1 to j
+								double Wik = lRate * Qk * FN1[i-1];
+								// My.cout("FN1i: "+FN1[i-1]);
+								// My.cout("Wik: "+Wik);
+								
+								WIK[i][k] = Wik;
+	
+								//Calculate the sum of delta inputs for each node in the hidden layer
+								// Qni = SUM(Qk * wik)
+								//where k = 1 to m
+								//where i = 0 to j-1
+								// Qni += Qk * Wik;
+								Qni += Qk * W[i][k];
+							}
+	
+	
 						}
-
-
+						sumDI[i] = Qni;
 					}
-					Qni = My.stepify(Qni,acc);
-					sumDI[i] = Qni;
-				}
-				for(int l=0;l<N;l++){
-	
-					for(int i=1;i<J;i++){
-
-						double Qni = sumDI[i-1];
-	
-						//Calculate the error information term for each node in the hidden layer
-						// Qi = Qni * f'(n1i)
-						//where i = 0 to j-1
-						double Qi = Qni * dFN1[i-1];
-						
-						if(l==0){
-							//Calculate the bias error term for each node in the hidden layer
-							// DELTA v0i = lRate * Qi
+					for(int l=0;l<N;l++){
+						for(int i=1;i<J;i++){
+							double Qni = sumDI[i-1];
+		
+							//Calculate the error information term for each node in the hidden layer
+							// Qi = Qni * f'(n1i)
 							//where i = 0 to j-1
-							double v0i = lRate * Qi;
-							v0i = My.stepify(v0i,acc);
-
-							VLI[0][i-1] = v0i;
-						}else{
-							//Calculate the weight error term for each node in the hidden layer
-							// DELTA vli = lRate * Qi * pl
-							//where l = 1 to n
-							//where i = 0 to j-1
-							double Vli  = lRate * Qi * _p[l-1];
-							Vli = My.stepify(Vli,acc);
-
-							VLI[l][i-1] = Vli;
+							double Qi = Qni * dFN1[i-1];
+							
+							if(l==0){
+								//Calculate the bias error term for each node in the hidden layer
+								// DELTA v0i = lRate * Qi
+								//where i = 0 to j-1
+								double v0i = lRate * Qi;
+	
+								VLI[0][i-1] = v0i;
+							}else{
+								//Calculate the weight error term for each node in the hidden layer
+								// DELTA vli = lRate * Qi * pl
+								//where l = 1 to n
+								//where i = 0 to j-1
+								double Vli  = lRate * Qi * _p[l-1];
+	
+								VLI[l][i-1] = Vli;
+							}
+						}
+		
+					}
+	
+					// My.cout("weightH: \n"+printMatrix(VLI));
+					// My.cout("weightO: \n"+printMatrix(WIK));
+	
+					for(int l=0;l<N;l++){
+						for(int i=1;i<J;i++){
+							V[l][i-1] += VLI[l][i-1];
+							V[l][i-1] = My.stepify(V[l][i-1],acc);
 						}
 					}
-	
-				}
-
-				// My.cout("weightH: \n"+printMatrix(VLI));
-				// My.cout("weightO: \n"+printMatrix(WIK));
-
-				for(int l=0;l<N;l++){
-					for(int i=1;i<J;i++){
-						V[l][i-1] += VLI[l][i-1];
-						V[l][i-1] = My.stepify(V[l][i-1],acc);
+					for(int i=0;i<J;i++){
+						for(int k=0;k<M;k++){
+							W[i][k] += WIK[i][k];
+							W[i][k] = My.stepify(W[i][k],acc);
+						}
 					}
 				}
-				for(int i=0;i<J;i++){
-					for(int k=0;k<M;k++){
-						W[i][k] += WIK[i][k];
-						W[i][k] = My.stepify(W[i][k],acc);
-					}
-				}
-
-				lastdFN1 = dFN1;
-				lastdFN2 = dFN2;
 				
 			}
 
 			epochCount++;
 
 		}
-		My.cout("V:\n"+printMatrix(v));
-		My.cout("W:\n"+printMatrix(w));
-
-		double[] input = p[1];
-		double[] output = new double[M];
-
-		double[] N1 = new double[J-1];
-		double[] FN1 = new double[J-1];
-		double[] dFN1 = new double[J-1];
-		double[] N2 = new double[M];
-		double[] FN2 = new double[M];
-		double[] dFN2 = new double[M];
-		
-		/// FEEDFORWARD
-
-		//FeedForward Hidden Layer
-		for(int i=1; i<J; i++){
-			double _n1 = 0;
-			_n1 += My.stepify(V[0][i-1], acc);
-			for(int l=1; l<N; l++){
-				_n1 += My.stepify(V[l][i-1], acc) * My.stepify(input[l-1], acc);
-			}
-			double _fn1 = Activate(My.stepify(_n1,acc), isBipolar);
-			double _dirFn1 = DirActivate(My.stepify(_n1,acc), isBipolar);
-			_fn1 = My.stepify(_fn1,acc);
-			_dirFn1 = My.stepify(_dirFn1,acc);
-
-			N1[i-1] = _n1;
-			FN1[i-1] = _fn1;
-			dFN1[i-1] = _dirFn1;
-		}
-		//FeedForward Output Layer
-		for(int k=0; k<M; k++){
-			double _n2 = 0;
-			_n2 += My.stepify(W[0][k],acc);
-			for(int i=1; i<J; i++){
-				_n2 += My.stepify(W[i][k],acc) * FN1[i-1];
-			}
-			double _fn2 = Activate(My.stepify(_n2,acc), isBipolar);
-			double _dirFn2 = DirActivate(My.stepify(_n2,acc), isBipolar);
-			_fn2 = My.stepify(_fn2,acc);
-			_dirFn2 = My.stepify(_dirFn2,acc);
-
-			N1[k] = _n2;
-			FN2[k] = _fn2;
-			dFN2[k] = _dirFn2;
-
-			output[k] = _dirFn2;
-		}
-
-		My.cout("N1: "+printVector(N1));
-		My.cout("FN1: "+printVector(FN1));
-		My.cout("dFN1: "+printVector(dFN1));
-		My.cout("N2: "+printVector(N2));
-		My.cout("FN2: "+printVector(FN2));
-		My.cout("dFN2: "+printVector(dFN2));
 		My.cout("");
-		My.cout("in: "+printVector(input));
-		My.cout("out: "+printVector(output));
+		for(int e=0;e<tensor.length;e++){
+			double[][] mat = tensor[e];
+			for(int r=0;r<mat.length;r++){
+				for(int c=0;c<mat[r].length;c++){
+					// if(r==0) mat[r][c] = 1;
+					mat[r][c] = My.stepify(mat[r][c], acc);
+				}
+			}
+			My.cout("M"+e+": "+printMatrix(mat));
+		}
+
+		/// TESTING NETWORK
+
+		for(int _p=0;_p<p.length;_p++){
+			double[] input = p[_p];
+			double[] output = new double[t[0].length];
+
+			double[][] eN = new double[tensor.length][];
+			double[][] FN = new double[tensor.length][];
+			double[][] dFN = new double[tensor.length][];
+	
+			for(int e=0; e<tensor.length; e++){
+				double[][] V = tensor[e];
+				int N = V.length;
+				int J = V[0].length;
+				FN[e] = new double[J];
+				dFN[e] = new double[J];
+				eN[e] = new double[J];
+
+				double[] preFN = input;
+
+				if(e>0){
+					preFN = FN[e-1];
+				}
+
+				for(int i=0; i<J; i++){
+					double _n = V[0][i];
+
+					for(int l=1; l<N; l++){
+						_n += V[l][i] * preFN[l-1];
+					}
+
+					double _fn = Activate(_n, activationFuncs[e], isBipolar);
+					double _dirFn = DirActivate(_n, activationFuncs[e], isBipolar);
+					_fn = My.stepify(_fn,acc);
+					_dirFn = My.stepify(_dirFn,acc);
+
+					eN[e][i] = _n;
+					FN[e][i] = _fn;
+					dFN[e][i] = _dirFn;
+
+					if(e==tensor.length-1){
+						output[i] = _dirFn;
+					}
+				}
+				My.cout("N"+e+": "+printVector(eN[e]));
+				My.cout("FN"+e+": "+printVector(FN[e]));
+				My.cout("dFN"+e+": "+printVector(dFN[e]));
+				My.cout("");
+			}
+			My.cout("");
+			My.cout("in: "+printVector(input));
+			My.cout("out: "+printVector(output));
+			My.cout("");
+
+		}
+
 
 	}
 
@@ -834,7 +855,12 @@ public class myMain{
     }
 
 	public static double Activate(double n, boolean bipolar){
-		String func = "relu";
+		return Activate(n, "relu", bipolar);
+	}
+	public static double DirActivate(double n, boolean bipolar){
+		return DirActivate(n, "relu", bipolar);
+	}
+	public static double Activate(double n, String func, boolean bipolar){
 		switch(func){
 			case "mcpitts": return MCPitts(n, 0, bipolar);
 			case "relu": return ReLu(n, bipolar);
@@ -842,8 +868,7 @@ public class myMain{
 			default: return 1;
 		}
 	}
-	public static double DirActivate(double n, boolean bipolar){
-		String func = "relu";
+	public static double DirActivate(double n, String func, boolean bipolar){
 		switch(func){
 			case "mcpitts": return MCPitts(n, 0, bipolar);
 			case "relu": return Dir_ReLu(n, bipolar);
