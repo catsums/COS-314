@@ -275,6 +275,17 @@ public class My{
 		Random rnd = new Random();
 		return rnd.nextInt(max - min + 1) + min;
 	}
+
+	public static double rndDouble(double min, double max, long seed){
+		Random rnd = new Random(seed);
+		// random.nextDouble()*(maxX - minX) + minX;
+		return rnd.nextDouble() * (max - min) + min;
+	}
+
+	public static int rndInt(int min, int max, long seed){
+		Random rnd = new Random(seed);
+		return rnd.nextInt(max - min + 1) + min;
+	}
 	
 	public static double stepify(double value, double step){
 		if(step == 0) return value;

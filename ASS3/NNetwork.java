@@ -13,12 +13,12 @@ public class NNetwork{
 	public double learningRate = 0.69;
 	public boolean isBipolar = true;
 
-	public NNetwork(int inputSize, int instSize, int outputSize, int numOfHiddenLayers){
-		int[] layerSizes = new int[1+1+numOfHiddenLayers+1];
-		for(int i=0;i<layerSizes.length;i++){
-			if(i==0) layerSizes[i] = inputSize;
-			if(i==1) layerSizes[1] = instSize;
-			else layerSizes[i] = outputSize;
+	public NNetwork(int inputSize, int[] instSizes, int outputSize){
+		int[] layerSizes = new int[1+instSizes.length+1];
+		layerSizes[0] = inputSize;
+		layerSizes[layerSizes.length-1] = outputSize;
+		for(int i=1;i<layerSizes.length-1;i++){
+			layerSizes[i] = instSizes[i-1];
 		}
 
 		tensor = new double[layerSizes.length-1][][];
@@ -56,6 +56,10 @@ public class NNetwork{
 		return row.length;
 	}
 
+	public int getNumberOfLayers(){
+		return tensor.length;
+	}
+
 	public double[][] process(double[] input, double factor){
 		double[] output = new double[getOutputSize()];
 		double[] outputDIR = new double[getOutputSize()];
@@ -80,7 +84,7 @@ public class NNetwork{
 				double _n = V[0][i];
 
 				for(int l=1; l<N; l++){
-					_n += V[l][i] * preFN[l-1];
+					_n += V[l][i] * preFN[(l-1)%preFN.length];
 				}
 
 				double _fn = Activate(_n, factor, activationFuncs[e], isBipolar);
@@ -92,6 +96,9 @@ public class NNetwork{
 				if(e==tensor.length-1){
 					output[i] = Activate(_n, factor, outputFunc, isBipolar);
 					outputDIR[i] = DirActivate(_n, factor,outputFunc, isBipolar);
+
+					output[i] = My.stepify(output[i], accuracy);
+					outputDIR[i] = My.stepify(outputDIR[i], accuracy);
 				}
 			}
 		}
@@ -128,6 +135,7 @@ public class NNetwork{
 			
 			double[][] prev_FN = new double[tensor.length][];
 			double[][] prevERRs = null;
+			// double[][] zeroERRs = new double[tensor.length-1][];
 
 			for(int c=0; c<setSize; c++){
 
@@ -157,7 +165,7 @@ public class NNetwork{
 						double _n = V[0][i];
 	
 						for(int l=1; l<N; l++){
-							_n += V[l][i] * preFN[l-1];
+							_n += V[l][i] * preFN[(l-1)%preFN.length];
 						}
 						double _fn = Activate(_n, factor, activationFuncs[e], isBipolar);
 						double _dirFn = DirActivate(_n, factor, activationFuncs[e], isBipolar);
@@ -169,11 +177,11 @@ public class NNetwork{
 					}
 				}
 
-				//if the FNs did not change from last time, then theres convergence
+				// //if the FNs did not change from last time, then theres convergence
 				if(
 					Arrays.deepEquals(FN, prev_FN)
 				){
-					My.cout("Convergence in network detected. No changes in FN");
+					// My.cout("Convergence in network detected. No changes in FN");
 					continue;
 				}else{
 					conv = false;
@@ -207,8 +215,9 @@ public class NNetwork{
 							//Qk = (tk - f(n2k)) * f'(n2k)
 							//where k = 1 to m
 							
+							// ((k * M) / postFN.len)
 
-							double Qk = (postFN[(k%postFN.length)] - FN2[k]) * dFN2[k];
+							double Qk = (_t[k] - FN2[k]) * dFN2[k];
 							
 							QK[k] = My.stepify(Qk, acc);
 							
@@ -240,6 +249,7 @@ public class NNetwork{
 					
 					ERRs[e-1] = QK;
 					
+
 					//Update weights in the output layer
 					for(int i=0;i<J;i++){
 						for(int k=0;k<M;k++){
@@ -256,7 +266,7 @@ public class NNetwork{
 					for(int i=0;i<J;i++){
 						double Qni = 0;
 						for(int k=0;k<M;k++){
-							double Qk = (ERRs[e-1][k] - FN2[k]) * dFN2[k];
+							double Qk = ERRs[e-1][k];
 							Qni += Qk * W[i][k];
 							// Qni += Qk * WIK;
 						}
@@ -287,7 +297,8 @@ public class NNetwork{
 								double[] preFN = _p;
 								if(e-1>0) preFN = FN[e-2];
 
-								double Vli  = lRate * Qi * preFN[l-1];
+								// double Vli  = lRate * Qi * preFN[( (l-1) * (N-1) )/preFN.length];
+								double Vli  = lRate * Qi * preFN[(l-1)%preFN.length];
 	
 								VLI[l][i-1] = Vli;
 							}
@@ -295,7 +306,7 @@ public class NNetwork{
 		
 					}
 	
-					//Update weights in the hidder layer
+					//Update weights in the hidden layer
 					for(int l=0;l<N;l++){
 						for(int i=1;i<J;i++){
 							V[l][i-1] += VLI[l][i-1];
@@ -307,11 +318,11 @@ public class NNetwork{
 				
 				// My.cout("ErrorCorrection Terms per Layer:");
 				// for(double[] corr:ERRs){
-				// 	if(corr==null) continue;
+				// 	// if(corr==null) continue;
 				// 	My.cout(printVector(corr));
 				// }
 				if(prevERRs==null){
-					prevERRs = new double[ERRs.length][ERRs[0].length];
+					prevERRs = new double[ERRs.length][];
 				}
 
 				//if there's no change in error terms, then theres convergence
@@ -320,6 +331,7 @@ public class NNetwork{
 					conv = true;
 					break;
 				}else{
+					conv = false;
 					prevERRs = ERRs;
 				}
 				
@@ -328,7 +340,7 @@ public class NNetwork{
 			epochCount++;
 		}
 
-		// My.cout("Took "+epochCount+" epochs");
+		My.cout("Took "+epochCount+" epochs");
 		for(int en=0; en<tensor.length; en++){
 			double[][] mat = tensor[en];
 			for(int r=0;r<mat.length;r++){

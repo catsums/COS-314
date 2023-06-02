@@ -9,7 +9,7 @@ public class myMain{
 	public static void main(String[] args) throws Exception {
 		My.cout("| MAIN START |"); My.cout("---------------");
 
-		m1();
+		m2();
 
 		My.cout("---------------"); My.cout("| MAIN END |");
 		return;
@@ -103,6 +103,228 @@ public class myMain{
 		My.cout("out: "+printVector(output));
 
     }
+
+	public static void m2(){
+		My.cout("m2");
+        My.cout("---------------");
+
+		File dataFile = new File("data/breast-cancer.data");
+
+		ArrayList<double[]> dataset = new ArrayList<>();
+		ArrayList<double[]> classSet = new ArrayList<>();
+
+		ArrayList<double[]> fixSet = new ArrayList<>();
+
+		String[][] attributes = {
+			{"no-recurrence-events", "recurrence-events"},
+			{"10-19", "20-29", "30-39", "40-49", "50-59", "60-69", "70-79", "80-89", "90-99"},
+			{"lt40", "ge40", "premeno"},
+			{"0-4", "5-9", "10-14", "15-19", "20-24", "25-29", "30-34", "35-39", "40-44","45-49", "50-54", "55-59"},
+			{"0-2", "3-5", "6-8", "9-11", "12-14", "15-17", "18-20", "21-23", "24-26","27-29", "30-32", "33-35", "36-39"},
+			{"yes", "no"},
+			{"1", "2", "3"},
+			{"left", "right"},
+			{"left_up", "left_low", "right_up", "right_low", "central"},
+			{"yes", "no"},
+		};
+
+		double ratio = (0.75);
+
+		long _seed = 9_876_543_210l;
+
+		double acc = 0.001;
+		double lRate = 1;
+		boolean isBipolar = false;
+
+		double factor = 0.01;
+		
+		ArrayList<String[]> lines = new ArrayList<>();
+		try{
+			Scanner scanner = new Scanner(dataFile);
+			int count = 0; int len = 286;
+			
+
+			while(scanner.hasNextLine()){
+				String line = scanner.nextLine();
+
+				String[] vars = line.split(",");
+				lines.add(vars);
+
+				count++;
+			}
+
+			My.cout("Counted "+count+" batch instances.");
+			
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+
+		String[][] _lines = shuffleArray(lines.toArray(new String[0][]), _seed);
+		_lines = shuffleArray(_lines, _seed);
+
+		for(String[] vars:_lines){
+			// double[] data = new double[9];
+			ArrayList<Double> data = new ArrayList<>();
+			ArrayList<Double> classifier = new ArrayList<>();
+
+			boolean dataMissing = false;
+
+			for(int i=0;i<attributes.length;i++){
+				double attr = -1;
+				for(int a=0;a<attributes[i].length;a++){
+					String _var = vars[i].trim().toLowerCase();
+					String _att = attributes[i][a].trim().toLowerCase();
+					if(_var.compareTo(_att)==0){
+						attr = a;
+						break;
+					}
+				}
+				if(attr!=-1){
+					if(i==0 || i==6 || i==9){
+						double k = ((attr+1) / attributes[i].length);
+						k = (k>0.5 ? 1 : 0);
+						classifier.add(k);
+						// classifier = attr;
+					}else{
+						double k = ((attr+1) / attributes[i].length);
+						// k = (k>0 ? 1 : 0);
+						data.add(My.stepify(k, acc));
+						// data[i-1] = attr;
+					}
+				}else{
+					dataMissing = true;
+					data.add(-1.0);
+				}
+			}
+			double[] dataArr = new double[data.size()];
+			for(int i=0;i<dataArr.length;i++) dataArr[i] = data.get(i);
+			double[] classArr = new double[classifier.size()];
+			for(int i=0;i<classArr.length;i++) classArr[i] = classifier.get(i);
+
+			if(dataMissing){
+				fixSet.add(dataArr);
+			}else{
+				dataset.add(dataArr);
+				classSet.add(classArr);
+			}
+		}
+
+		// My.cout(printMatrix(dataset.toArray(new double[0][])));
+
+		ArrayList<double[]> trainData = new ArrayList<>();
+		ArrayList<double[]> trainOutData = new ArrayList<>();
+
+		for(int i=0;i<(int)(ratio * (double)dataset.size()); i++){
+			// if(classSet.get(i)[0] != 0){
+				trainData.add(dataset.get(i));
+				trainOutData.add(classSet.get(i));
+			// }
+			// trainOutData.add(new double[]{arr[i][0],arr[i][5], arr[i][8]});
+		}
+
+		ArrayList<double[]> testData = new ArrayList<>();
+		ArrayList<double[]> testOutData = new ArrayList<>();
+
+		for(int i=trainData.size();i<dataset.size(); i++){
+			testData.add(dataset.get(i));
+			testOutData.add(classSet.get(i));
+			// testOutData.add(new double[]{arr[i][0],arr[i][5], arr[i][8]});
+		}
+
+		// for(double[] fix:fixSet){
+		// 	testData.add(fix);
+		// }
+
+		My.cout("Dataset: "+dataset.size());
+		My.cout("TrainData: "+trainData.size());
+		My.cout("TrainOutData: "+trainOutData.size());
+		My.cout("TestData: "+testData.size());
+		My.cout("TestOutdata: "+testOutData.size());
+		My.cout("FixData: "+fixSet.size());
+
+		int inputSize = trainData.get(0).length;
+		int outputSize = trainOutData.get(0).length;
+
+		My.cout("");
+		My.cout("InputSize: "+inputSize);
+		My.cout("OutputSize: "+outputSize);
+
+		int[] instSizes = {5};
+
+		NNetwork net = new NNetwork(inputSize, instSizes, outputSize);
+
+		net.accuracy = acc;
+		net.isBipolar = isBipolar;
+		net.learningRate = lRate;
+
+		// net.activationFuncs = new String[net.getNumberOfLayers()];
+		net.activationFuncs[0] = "sigmoid";
+		for(int f=0;f<net.activationFuncs.length;f++){
+			net.activationFuncs[f] = "sigmoid";
+		}
+		net.outputFunc = "mcpitts";
+
+		My.cout("");
+		My.cout("Tensor:");
+		for(int en=0;en<net.tensor.length;en++){
+			net.tensor[en] = initMatrix(net.tensor[en].length, net.tensor[en][0].length, -0.5, 0.5, _seed);
+			double[][] mat = net.tensor[en];
+			for(int r=0;r<mat.length;r++){
+				for(int c=0;c<mat[r].length;c++){
+					// if(r==0) mat[0][c] = 1;
+					mat[r][c] = My.stepify(mat[r][c], acc);
+				}
+			}
+			My.cout("M"+en+": \n"+printMatrix(net.tensor[en]));
+		}
+
+		net.trainNetwork(
+			trainData.toArray(new double[0][]),
+			trainOutData.toArray(new double[0][]),
+			factor, 1_000l
+		);
+
+		My.cout("");
+		My.cout("Trained Tensor:");
+		for(int en=0;en<net.tensor.length;en++){
+			My.cout("M"+en+": \n"+printMatrix(net.tensor[en]));
+		}
+
+		My.cout("");
+
+		double correct = 0; 
+
+		for(int i=0; i<testData.size(); i++){
+			double[] input = testData.get(i);
+			double[] expOut = testOutData.get(i);
+
+			double[][] res = net.process(input, factor);
+	
+			My.cout("In: "+printVector(input));
+			My.cout("Out: "+printVector(res[0]));
+			My.cout("OutDIR: "+printVector(res[1]));
+			My.cout("ExpOut: "+printVector(expOut));
+			My.cout("------");
+
+			if(Arrays.equals(res[1], expOut)) correct++;
+		}
+
+		My.cout("SuccessRate: "+(correct/testData.size()));
+	}
+
+	public static <T> T[] shuffleArray(T[] ar, long seed){
+		ar = ar.clone();
+		//Fisher–Yates shuffle
+		for (int i = ar.length - 1; i > 0; i--){
+			int index = My.rndInt(0, i, seed);
+			// Simple swap
+			T a = ar[index];
+			ar[index] = ar[i];
+			ar[i] = a;
+		}
+		return ar;
+	}
+
 	
 	public static void m1(){
 		My.cout("m1");
@@ -110,33 +332,41 @@ public class myMain{
 
 		//[number of inputs][inputSize]
 		double[][] p = new double[][]{
-			{1,-1,-1},
-			{1,1,-1},
-			{1,-1,1},
-			{1,1,1},
+			{0,0,0},
+			{0,1,0},
+			{0,1,1},
+			{1,0,1},
+			{1,1,0},
+			{0,0,1},
+			{1,0,0},
 			// {-1,-1,-1},
 		};
 		//[number of inputs][outputSize]
 		double[][] t = new double[][]{
-			{-1, 1},
-			{1, -1},
-			{1, 1},
-			{-1, -1},
+			{1},{0},{1},{1},{1},{0},{0}
 			// {-1, -1},
 		};
 
-		double acc = 0.01;
-		double lRate = 0.69;
-		boolean isBipolar = true;
+		double acc = 0.001;
+		double lRate = 1.5;
+		boolean isBipolar = false;
+		long seed = 20;
+
+		int[] instSizes = {4};
 		
-		NNetwork net = new NNetwork(p[0].length, 3, t[0].length, 1);
+		NNetwork net = new NNetwork(p[0].length, instSizes, t[0].length);
 
 		My.cout("Before:");
 		for(int e=0;e<net.tensor.length;e++){
 			double[][] mat = net.tensor[e];
-			for(int r=1;r<mat.length;r++){
+			for(int r=0;r<mat.length;r++){
 				for(int c=0;c<mat[r].length;c++){
-					mat[r][c] = 0;
+					mat[r][c] = My.stepify(
+						My.rndDouble(
+							-0.5, 0.5, (-(r+c)*seed + 2*(r-c)*seed + 2*(c-r)*seed - (mat.length-mat[r].length))*1234567890
+						), acc
+					);
+					// mat[r][c] = 0;
 				}
 
 			}
@@ -147,7 +377,13 @@ public class myMain{
 		net.learningRate = lRate;
 		net.accuracy = acc;
 
-		net.trainNetwork(p, t, 0, 500);
+		for(int i=0;i<net.activationFuncs.length;i++){
+			net.activationFuncs[i] = "sigmoid";
+		}
+		net.outputFunc = "relu";
+		// net.activationFuncs[0] = "relu";
+
+		net.trainNetwork(p, t, 0, 420);
 		
 		My.cout("After:");
 		for(int e=0;e<net.tensor.length;e++){
@@ -158,11 +394,7 @@ public class myMain{
 		/// TESTING NETWORK
 
 		double[][] tests = {
-			{1,-1,-1}, //{-1,1}
-			{1,1,-1}, //{1,-1}
-			{1,-1,1}, //{1,1}
-			{-1,-1,-1}, //{-1,1}
-			{1,1,1}, //{-1,-1}
+			{0,1,0}, {1,1,0}, {0,1,1}, {0,0,1}
 		};
 
 		for(int _p=0;_p<tests.length;_p++){
@@ -170,7 +402,7 @@ public class myMain{
 			double[] output;
 			double[] outDir;
 
-			double[][] res = net.process(input, acc);
+			double[][] res = net.process(input, 0);
 			output = res[0];
 			outDir = res[1];
 
@@ -370,6 +602,17 @@ public class myMain{
 		for(int r=0;r<rows;r++){
 			for(int c=0;c<cols;c++){
 				mat[r][c] = My.rndDouble(rx, ry);
+			}
+		}
+
+		return mat;
+	}
+	public static double[][] initMatrix(int rows, int cols, double rx, double ry, long seed){
+		double[][] mat = initMatrix(rows, cols);
+
+		for(int r=0;r<rows;r++){
+			for(int c=0;c<cols;c++){
+				mat[r][c] = My.rndDouble(rx, ry, ( My.rndInt(-999,999,r+c+seed) + seed ));
 			}
 		}
 
