@@ -5,7 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.Time;
 
-public class NNetwork{
+public class NNetworkX{
 	public double[][][] tensor;
 	public String[] activationFuncs;
 	public String outputFunc = "relu";
@@ -13,7 +13,7 @@ public class NNetwork{
 	public double learningRate = 0.69;
 	public boolean isBipolar = true;
 
-	public NNetwork(int inputSize, int[] instSizes, int outputSize){
+	public NNetworkX(int inputSize, int[] instSizes, int outputSize){
 		int[] layerSizes = new int[1+instSizes.length+1];
 		layerSizes[0] = inputSize;
 		layerSizes[layerSizes.length-1] = outputSize;
@@ -135,13 +135,14 @@ public class NNetwork{
 			
 			double[][] prev_FN = new double[tensor.length][];
 			double[][] prevERRs = null;
-			// double[][] zeroERRs = new double[tensor.length-1][];
+			double[][] zeroERRs = new double[tensor.length-1][];
 
 			for(int c=0; c<setSize; c++){
 
 				double[] _p = p[c];
 				double[] _t = t[c];
 
+				double[][] eN = new double[tensor.length][];
 				double[][] FN = new double[tensor.length][];
 				double[][] dFN = new double[tensor.length][];
 				double[][] ERRs = new double[tensor.length-1][];
@@ -152,6 +153,7 @@ public class NNetwork{
 					double[][] V = tensor[e];
 					int N = V.length;
 					int J = V[0].length;
+					eN[e] = new double[J];
 					FN[e] = new double[J];
 					dFN[e] = new double[J];
 
@@ -165,13 +167,14 @@ public class NNetwork{
 						double _n = V[0][i];
 	
 						for(int l=1; l<N; l++){
-							_n += V[l][i] * preFN[(l-1)%preFN.length];
+							_n += V[l][i] * preFN[l-1];
 						}
 						double _fn = Activate(_n, factor, activationFuncs[e], isBipolar);
 						double _dirFn = DirActivate(_n, factor, activationFuncs[e], isBipolar);
 						_fn = My.stepify(_fn,acc);
 						_dirFn = My.stepify(_dirFn,acc);
 	
+						eN[e][i] = _n;
 						FN[e][i] = _fn;
 						dFN[e][i] = _dirFn;
 					}
@@ -189,24 +192,27 @@ public class NNetwork{
 				}
 				
 				for(int e=tensor.length-1;e>0; e--){
-					double[][] V = tensor[e-1];
+					// double[][] V = tensor[e-1];
 					double[][] W = tensor[e];
-					int N = V.length;
+					// int N = V.length;
 					int J = W.length;
 					int M = W[0].length;
 
-					double[] FN1 = FN[e-1];
-					double[] dFN1 = dFN[e-1];
+					// double[] FN1 = FN[e-1];
+					// double[] dFN1 = dFN[e-1];
 					double[] FN2 = FN[e];
 					double[] dFN2 = dFN[e];
 
-					double[][] VLI = new double[N][J-1]; //li
+					// double[][] VLI = new double[N][J-1]; //li
 					double[][] WIK = new double[J][M]; //ik
-					double[] sumDI = new double[J];
+					// double[] sumDI = new double[J];
 
 					double[] QK = new double[M];
 					double[] postFN = _t;
 					if(e<tensor.length-1) postFN = FN[e+1];
+
+					double[] preFN = _p;
+					if(e>0) preFN = FN[e-1];
 
 					for(int i=0;i<J;i++){
 	
@@ -217,10 +223,12 @@ public class NNetwork{
 							
 							// ((k * M) / postFN.len)
 
-							double Qk = (_t[k] - FN2[k]) * dFN2[k];
-							// double Qk = 0.5 * Math.pow((FN2[k]-_t[k]), 2);
+							// double Qk = (_t[k] - FN2[k]) * dFN2[k];
+							double Qk = 0.5 * Math.pow((FN2[k] - postFN[k]), 2);
+							// double Qk = 0.5 * Math.pow((FN2[k] - postFN[k]), 2);
 							
-							QK[k] = My.stepify(Qk, acc);
+							QK[k] = Qk;
+							// QK[k] = My.stepify(Qk, acc);
 							
 							if(i==0){
 								//Calculate the bias correction term for each node in the output layer
@@ -236,7 +244,10 @@ public class NNetwork{
 								// DELTA wik = lRate * Qk * f(n1i)
 								//where l = 1 to n
 								//where i = 1 to j
-								double Wik = lRate * Qk * FN1[i-1];
+								// double Wik = lRate * Qk * dFN2[i-1];
+								double Wik = lRate * Qk * preFN[i-1];
+								// double Wik = lRate * Qk;
+								// double Wik = lRate * Qk * FN1[i-1];
 								
 								WIK[i][k] = Wik;
 	
@@ -259,61 +270,60 @@ public class NNetwork{
 						}
 					}
 					
-					
-					//Calculate the sum of delta inputs for each node in the hidden layer
-					// Qni = SUM(Qk * wik)
-					//where k = 1 to m
-					//where i = 0 to j-1
-					for(int i=0;i<J;i++){
-						double Qni = 0;
-						for(int k=0;k<M;k++){
-							double Qk = ERRs[e-1][k];
-							Qni += Qk * W[i][k];
-							// Qni += Qk * WIK;
-						}
-						sumDI[i] = Qni;
-					}
+					// //Calculate the sum of delta inputs for each node in the hidden layer
+					// // Qni = SUM(Qk * wik)
+					// //where k = 1 to m
+					// //where i = 0 to j-1
+					// for(int i=0;i<J;i++){
+					// 	double Qni = 0;
+					// 	for(int k=0;k<M;k++){
+					// 		double Qk = ERRs[e-1][k];
+					// 		Qni += Qk * W[i][k];
+					// 		// Qni += Qk * WIK;
+					// 	}
+					// 	sumDI[i] = Qni;
+					// }
 
-					for(int l=0;l<N;l++){
-						for(int i=1;i<J;i++){
-							double Qni = sumDI[i-1];
+					// for(int l=0;l<N;l++){
+					// 	for(int i=1;i<J;i++){
+					// 		double Qni = sumDI[i-1];
 		
-							//Calculate the error information term for each node in the hidden layer
-							// Qi = Qni * f'(n1i)
-							//where i = 0 to j-1
-							double Qi = Qni * dFN1[i-1];
+					// 		//Calculate the error information term for each node in the hidden layer
+					// 		// Qi = Qni * f'(n1i)
+					// 		//where i = 0 to j-1
+					// 		double Qi = Qni * dFN1[i-1];
 							
-							if(l==0){
-								//Calculate the bias error term for each node in the hidden layer
-								// DELTA v0i = lRate * Qi
-								//where i = 0 to j-1
-								double v0i = lRate * Qi;
+					// 		if(l==0){
+					// 			//Calculate the bias error term for each node in the hidden layer
+					// 			// DELTA v0i = lRate * Qi
+					// 			//where i = 0 to j-1
+					// 			double v0i = lRate * Qi;
 	
-								VLI[0][i-1] = v0i;
-							}else{
-								//Calculate the weight error term for each node in the hidden layer
-								// DELTA vli = lRate * Qi * pl
-								//where l = 1 to n
-								//where i = 0 to j-1
-								double[] preFN = _p;
-								if(e-1>0) preFN = FN[e-2];
+					// 			VLI[0][i-1] = v0i;
+					// 		}else{
+					// 			//Calculate the weight error term for each node in the hidden layer
+					// 			// DELTA vli = lRate * Qi * pl
+					// 			//where l = 1 to n
+					// 			//where i = 0 to j-1
+					// 			double[] preFN = _p;
+					// 			if(e-1>0) preFN = FN[e-2];
 
-								// double Vli  = lRate * Qi * preFN[( (l-1) * (N-1) )/preFN.length];
-								double Vli  = lRate * Qi * preFN[(l-1)%preFN.length];
+					// 			// double Vli  = lRate * Qi * preFN[( (l-1) * (N-1) )/preFN.length];
+					// 			double Vli  = lRate * Qi * preFN[(l-1)%preFN.length];
 	
-								VLI[l][i-1] = Vli;
-							}
-						}
+					// 			VLI[l][i-1] = Vli;
+					// 		}
+					// 	}
 		
-					}
+					// }
 	
-					//Update weights in the hidden layer
-					for(int l=0;l<N;l++){
-						for(int i=1;i<J;i++){
-							V[l][i-1] += VLI[l][i-1];
-							V[l][i-1] = My.stepify(V[l][i-1],acc);
-						}
-					}
+					// //Update weights in the hidden layer
+					// for(int l=0;l<N;l++){
+					// 	for(int i=1;i<J;i++){
+					// 		V[l][i-1] += VLI[l][i-1];
+					// 		V[l][i-1] = My.stepify(V[l][i-1],acc);
+					// 	}
+					// }
 				}
 
 				
@@ -327,7 +337,7 @@ public class NNetwork{
 				}
 
 				//if there's no change in error terms, then theres convergence
-				if(Arrays.deepEquals(ERRs, prevERRs)){
+				if(Arrays.deepEquals(ERRs, zeroERRs)){
 					My.cout("Convergence in network detected. No changes in ERRs");
 					conv = true;
 					break;
