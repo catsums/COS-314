@@ -176,54 +176,72 @@ public class myMain{
 
 		ArrayList<DT.Node> trees = new ArrayList<>();
 
-		trees.add( tree.ID3("Netball") );
+		String targetAttr = "Netball";
+
+		trees.add( tree.ID3(targetAttr) );
 		long seed = 696969;
-		
-		for(int i=0; i<5; i++){
-			trees.add( tree.RandomID3("Netball", seed * i * i-1) );
+
+		ArrayList<ArrayList<String>> dataset = new ArrayList<>();
+		for(String[] dat:data){
+			dataset.add(new ArrayList<>(Arrays.asList(dat)));
 		}
+		
+		////////////
+
+		DT.Node finalTree = GPClassfication(tree, targetAttr, dataset, 5, 20, 0.5, 0.5, seed);
+
+		My.cout("FinalTree:\n "+finalTree);
+		My.cout("Fitness:"+GetFitnessOfNode(finalTree, dataset, tree, targetAttr));
+
+		/////////
+
+		// for(int i=0; i<5; i++){
+		// 	trees.add( tree.RandomID3("Netball", seed * i * i-1) );
+		// }
 
 		// for(DT.Node root:trees){
 		// 	My.cout(root);
 		// }
 
-		DT.Node nA = trees.get(2);
-		DT.Node nB = trees.get(1);
-		DT.Node nC = trees.get(3);
+		// DT.Node nA = trees.get(2);
+		// DT.Node nB = trees.get(1);
+		// DT.Node nC = trees.get(3);
 
-		My.cout("nA:\n "+nA);
-		My.cout("nB:\n "+nB);
-		My.cout("nC:\n "+nC);
+		// My.cout("nA:\n "+nA);
+		// My.cout("nB:\n "+nB);
+		// My.cout("nC:\n "+nC);
 
-		DT.Node[] offspring = CrossOver(new DT.Node[]{
-			nA, nB
-		}, tree, 1, seed);
+		// DT.Node[] offspring = CrossOver(new DT.Node[]{
+		// 	nA, nB
+		// }, tree, 1, seed);
 
-		ArrayList<DT.Node> stuff = new ArrayList<>(Arrays.asList(offspring));
+		// ArrayList<DT.Node> stuff = new ArrayList<>(Arrays.asList(offspring));
 
-		stuff.add(
-			Mutate(nC, "Netball", tree, 1, seed)
-		);
+		// stuff.add(
+		// 	Mutate(nC, "Netball", tree, 1, seed)
+		// );
 
-		for(DT.Node ch:stuff){
-			My.cout(">\n "+ch);
+		// for(DT.Node ch:stuff){
+		// 	My.cout(">\n "+ch);
 
-			double corr = 0; double len = data.length;
+		// 	double corr = 0; double len = data.length;
 			
-			for(String[] dat:data){
-				String expOut = dat[4];
-				String out = tree.decideLabel(ch, new ArrayList<>(Arrays.asList(dat)));
+		// 	for(String[] dat:data){
+		// 		String expOut = dat[4];
+		// 		String out = tree.decideLabel(ch, new ArrayList<>(Arrays.asList(dat)));
 
-				if(out.compareTo(expOut)==0){
-					corr++;
-				}
+		// 		if(out.compareTo(expOut)==0){
+		// 			corr++;
+		// 		}
 				
-			}
-			double fitness = (corr/len);
-			My.cout("Node Count: "+ch.DFSCountNodes());
-			My.cout("Node Depth: "+ch.DFSDepth());
-			My.cout("Fitness: "+fitness);
-		}
+		// 	}
+		// 	double fitness = (corr/len);
+		// 	My.cout("Node Count: "+ch.DFSCountNodes());
+		// 	My.cout("Node Depth: "+ch.DFSDepth());
+		// 	My.cout("Fitness: "+fitness);
+		// }
+
+		//////////////
 		
 		// My.cout("nA:\n "+nA);
 		// DT.Node nA1 = nA.DFSFindNodeByAttr("Wind");
@@ -290,9 +308,11 @@ public class myMain{
 
 		//Evaluating each object
 		My.cout("Evaluating First Population...");
-		for(DT.Node node:population){
+		for(int i=0;i<population.size();i++){
+			DT.Node node = population.get(i);
 			if(node.DFSCountNodes() >= MAX_SIZE){
-				population.remove(node);
+				population.remove(i);
+				i--;
 			}
 		}
 
@@ -319,15 +339,73 @@ public class myMain{
 				oldGen.set(i, m);
 			}
 
-			for(DT.Node node:childs){
+			//evaluate new childs
+			for(int i=0;i<childs.size();i++){
+				DT.Node node = childs.get(i);
 				if(node.DFSCountNodes() >= MAX_SIZE){
-					childs.remove(node);
+					childs.remove(i);
+					i--;
 				}
 			}
+			//select for next gen
+			if(oldGen.size()>0){
+				oldGen.sort(sortingAlgo);
+				double _topFitness = GetFitnessOfNode(oldGen.get(0), data, dt, targetAttr);
+	
+				for(int i=0; i<oldGen.size();i++){
+					DT.Node m = oldGen.get(i);
+					double _fit = GetFitnessOfNode(m, data, dt, targetAttr);
+					if(_fit < (_topFitness/2)){
+						oldGen.remove(i);
+						i++;
+					}
+				}
+			}
+			for(DT.Node node:lastGen){
+				oldGen.add(node);
+			}
+
+			lastGen = childs;
+
+			//evaluate old generation
+			if(oldGen.size() > MAX_CAPACITY/2){
+				oldGen.sort(sortingAlgo);
+				ArrayList<DT.Node> temp = new ArrayList<>();
+				for(int i=0;i<MAX_CAPACITY/2;i++) temp.add(oldGen.get(i));
+				oldGen = temp;
+			}
+			population = new ArrayList<>();
+			for(DT.Node node:oldGen){
+				population.add(node);
+			}
+			//evaluate new generation
+			if(lastGen.size() > MAX_CAPACITY/2){
+				lastGen.sort(sortingAlgo);
+				ArrayList<DT.Node> temp = new ArrayList<>();
+				for(int i=0;i<MAX_CAPACITY/2;i++) temp.add(lastGen.get(i));
+				lastGen = temp;
+			}
+			for(DT.Node node:lastGen){
+				population.add(node);
+			}
+			//select current pop
+			if(population.size() > MAX_CAPACITY/2){
+				population.sort(sortingAlgo);
+				ArrayList<DT.Node> temp = new ArrayList<>();
+				for(int i=0;i<MAX_CAPACITY/2;i++) temp.add(population.get(i));
+				population = temp;
+			}
+
+			My.cout("Population for generation "+(iters++)+": "+population.size());
 
 		}
 
-		return null;
+		population.sort(sortingAlgo);
+		My.cout("Final Population:" + population.size());
+
+		if(population.size()<=0) return null;
+
+		return population.get(0);
 	}
 
 	public static double GetFitnessOfNode(DT.Node node, ArrayList<ArrayList<String>> dataset, DT dt, String targetAttr){
@@ -341,6 +419,7 @@ public class myMain{
 		for(ArrayList<String> data:dataset){
 			String expOutput = data.get(index);
 			String output = dt.decideLabel(node, data);
+			if(output==null) continue;
 			if(output.compareTo(expOutput)==0){
 				correct++;
 			}

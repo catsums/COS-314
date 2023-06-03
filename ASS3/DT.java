@@ -242,10 +242,15 @@ public class DT {
 	protected String checkAttr(Node node, ArrayList<String> data, ArrayList<String> attrs){
 		String attr = node.attr;
 		int indexOfData = -1;
-		indexOfData = attrs.indexOf(attr);
+		for(int i=0;i<attrs.size();i++){
+			if(attr.compareTo(attrs.get(i))==0){
+				indexOfData = i;
+				break;
+			}
+		}
 
 		if(indexOfData<0){
-			// My.cout("Node: "+node.attr);
+			// My.cout("nullable Node: "+node.attr);
 			return null;
 		}
 		
@@ -257,9 +262,10 @@ public class DT {
 			
 			return checkAttr(child, data, attrs);
 		}
-		// My.cout("mid");
-		// My.cout("Node: "+node.attr);
-		// My.cout("val: "+val);
+		// My.cout("mid nullable");
+		// My.cout("Node: \n"+node);
+		// My.cout("Node childs: "+Arrays.toString(node.childs.keySet().toArray()));
+		// My.cout("label: "+val);
 		// My.cout("indexOfData: "+indexOfData);
 		// My.cout("data: "+Arrays.toString(data.toArray()));
 		return null;
