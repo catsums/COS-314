@@ -9,10 +9,386 @@ public class myMain{
 	public static void main(String[] args) throws Exception {
 		My.cout("| MAIN START |"); My.cout("---------------");
 
-		m2();
+		m3();
 
 		My.cout("---------------"); My.cout("| MAIN END |");
 		return;
+	}
+
+	public static void m4(){
+		My.cout("m4");
+        My.cout("---------------");
+
+		File dataFile = new File("data/breast-cancer.data");
+
+		ArrayList<ArrayList<String>> dataset = new ArrayList<>();
+
+		String[][] attributes = {
+			{"no-recurrence-events", "recurrence-events"},
+			{"10-19", "20-29", "30-39", "40-49", "50-59", "60-69", "70-79", "80-89", "90-99"},
+			{"lt40", "ge40", "premeno"},
+			{"0-4", "5-9", "10-14", "15-19", "20-24", "25-29", "30-34", "35-39", "40-44","45-49", "50-54", "55-59"},
+			{"0-2", "3-5", "6-8", "9-11", "12-14", "15-17", "18-20", "21-23", "24-26","27-29", "30-32", "33-35", "36-39"},
+			{"yes", "no"},
+			{"1", "2", "3"},
+			{"left", "right"},
+			{"left_up", "left_low", "right_up", "right_low", "central"},
+			{"yes", "no"},
+		};
+
+		double ratio = (0.75);
+		double acc = 0.01;
+
+		long _seed = 9_876_543_210l;
+
+		double factor = 0.01;
+		
+		ArrayList<String[]> lines = new ArrayList<>();
+		try{
+			Scanner scanner = new Scanner(dataFile);
+			int count = 0;
+			// int len = 286;
+			int len = 286;
+
+			while(scanner.hasNextLine() && count<len){
+				String line = scanner.nextLine();
+
+				String[] vars = line.split(",");
+				lines.add(vars);
+
+				count++;
+			}
+
+			My.cout("Counted "+count+" batch instances.");
+			
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+
+		String[][] _lines = shuffleArray(lines.toArray(new String[0][]), _seed);
+		_lines = shuffleArray(_lines, _seed);
+		_lines = shuffleArray(_lines, _seed);
+
+		for(String[] vars:_lines){
+			ArrayList<String> data = new ArrayList<>();
+
+			boolean missing = false;
+
+			for(int i=0;i<attributes.length;i++){
+				int attr = -1;
+				for(int a=0;a<attributes[i].length;a++){
+					String _var = vars[i].trim().toLowerCase();
+					String _att = attributes[i][a].trim().toLowerCase();
+					if(_var.compareTo(_att)==0){
+						attr = a;
+						break;
+					}
+				}
+				if(attr!=-1){
+					data.add(attributes[i][attr]);
+				}else{
+					missing = true;
+					data.add("?");
+				}
+			}
+
+			if(!missing) dataset.add(data);
+		}
+
+
+		DT tree = new DT(new String[]{
+			"Class","age","menopause","tumor-size","inv-nodes","node-caps","deg-malig","breast","breast-quad","irradiat"
+		});
+
+		for(ArrayList<String> data:dataset){
+			tree.addData(data.toArray(new String[0]));
+		}
+
+		String chosenAtt = "irradiat";
+		int attIndex = Arrays.asList(tree.attributes).indexOf(chosenAtt);
+
+		My.cout("Attr: "+chosenAtt+" ("+attIndex+")");
+
+		// for(int i=0;i<tree.attributes.length;i++){
+		// 	if(tree.attributes[i].compareTo(chosenAtt)==0){
+		// 		attIndex = i; break;
+		// 	}
+		// }
+
+		DT.Node root = tree.ID3(chosenAtt);
+
+		My.cout(root);
+
+		ArrayList<ArrayList<String>> set = dataset;
+
+		double correct = 0;
+		double len = set.size();
+
+
+		for(ArrayList<String> input:set){
+			String expOutput = input.get(attIndex);
+			String output = tree.decideLabel(root, input);
+
+			if(output==null){
+				My.cout("Err in output...");
+			}else if(expOutput.compareTo(output)==0){
+				correct++;
+			}
+
+			My.cout("Output: "+output);
+			My.cout("ExpOutput: "+expOutput);
+			My.cout("------");
+		}
+
+		double successRate = My.stepify((correct/len)*100, acc);
+
+		My.cout("");
+		My.cout("SuccessRate: "+successRate);
+
+	}
+
+	public static void m3(){
+		My.cout("m3");
+        My.cout("---------------");
+
+		DT tree = new DT(new String[]{"Outlook","Temp","Humidity","Wind","Netball"});
+
+		String[][] data = new String[][]{
+			new String[]{"sun",	"hot",	"high",	"weak",		"no"},
+			new String[]{"sun",	"hot",	"high",	"strong",	"no"},
+			new String[]{"oc",		"hot",	"high",	"weak",		"yes"},
+			new String[]{"rain",	"mild",	"high",	"weak",		"yes"},
+			new String[]{"rain",	"cool",	"normal",	"weak",		"yes"},
+			new String[]{"rain",	"cool",	"normal",	"strong",	"no"},
+			new String[]{"oc",		"cool",	"normal",	"strong",	"yes"},
+			new String[]{"sun",	"mild",	"high",	"weak",		"no"},
+			new String[]{"sun",	"cool",	"normal",	"weak",		"yes"},
+			new String[]{"rain",	"mild",	"normal",	"weak",		"yes"},
+			new String[]{"sun",	"mild",	"normal",	"strong",	"yes"},
+			new String[]{"oc",		"mild",	"high",	"strong",	"yes"},
+			new String[]{"oc",		"hot",	"normal",	"weak",		"yes"},
+			new String[]{"rain",	"mild",	"high",	"strong",	"no"},
+		};
+
+		for(String[] dat:data){
+			tree.addData(dat);
+		}
+
+		ArrayList<DT.Node> trees = new ArrayList<>();
+
+		trees.add( tree.ID3("Netball") );
+		long seed = 696969;
+		
+		for(int i=0; i<5; i++){
+			trees.add( tree.RandomID3("Netball", seed * i * i-1) );
+		}
+
+		// for(DT.Node root:trees){
+		// 	My.cout(root);
+		// }
+
+		DT.Node nA = trees.get(2);
+		DT.Node nB = trees.get(1);
+		DT.Node nC = trees.get(3);
+
+		My.cout("nA:\n "+nA);
+		My.cout("nB:\n "+nB);
+		My.cout("nC:\n "+nC);
+
+		DT.Node[] offspring = CrossOver(new DT.Node[]{
+			nA, nB
+		}, tree, 1, seed);
+
+		ArrayList<DT.Node> stuff = new ArrayList<>(Arrays.asList(offspring));
+
+		stuff.add(
+			Mutate(nC, "Netball", tree, 1, seed)
+		);
+
+		for(DT.Node ch:stuff){
+			My.cout(">\n "+ch);
+
+			double corr = 0; double len = data.length;
+			
+			for(String[] dat:data){
+				String expOut = dat[4];
+				String out = tree.decideLabel(ch, new ArrayList<>(Arrays.asList(dat)));
+
+				if(out.compareTo(expOut)==0){
+					corr++;
+				}
+				
+			}
+			double fitness = (corr/len);
+			My.cout("Fitness: "+fitness);
+		}
+		
+		// My.cout("nA:\n "+nA);
+		// DT.Node nA1 = nA.DFSFindNodeByAttr("Wind");
+		// My.cout("nA1:\n "+nA1);
+		// DT.Node nA1p = nA1.DFSFindParent(nA);
+		// My.cout("nA1p:\n "+nA1p);
+
+		// My.cout("");
+
+		// My.cout("nB:\n "+nB);
+		// DT.Node nB1 = nB.DFSFindNodeByAttr("Wind");
+		// My.cout("nB1:\n "+nA1);
+		// DT.Node nB1p = nB1.DFSFindParent(nB);
+		// My.cout("nB1p:\n "+nB1p);
+		
+		// DT.Node nAx = new DT.Node(nA);
+		// My.cout("nAx:\n "+nAx);
+		// DT.Node nBx = new DT.Node(nB);
+		// My.cout("nBx:\n "+nBx);
+		
+		// My.cout("CROSSOVER");
+		
+		// DT.Node nAx1 = nAx.DFSFindNodeByLabel("Temp", "mild");
+		// DT.Node nAx1p = nAx1.DFSFindParent(nAx);
+		// My.cout("nAx1:\n "+nAx1);
+		// My.cout("nAx1p:\n "+nAx1p);
+		// // String labelAx1 = nAx1p.getLabelForChild(nAx1);
+		// // My.cout("labelAx1: "+labelAx1);
+		
+		// DT.Node nBx1 = nBx.DFSFindNodeByLabel("Temp","mild");
+		// DT.Node nBx1p = nBx1.DFSFindParent(nBx);
+		// My.cout("nBx1:\n "+nBx1);
+		// My.cout("nBx1p:\n "+nBx1p);
+		// // String labelBx1 = nBx1p.getLabelForChild(nBx1);
+		// // My.cout("labelBx1: "+labelBx1);
+
+		// nAx1p.removeChild("mild");
+		// nAx1p.addChild("mild", nBx1);
+		// nBx1p.removeChild("mild");
+		// nBx1p.addChild("mild", nAx1);
+		
+		// My.cout("nAx:\n "+nAx);
+		// My.cout("nBx:\n "+nBx);
+
+	}
+
+	public static DT.Node Mutate(DT.Node node, String targetAttr, DT dt, double mutationRate, long seed){
+
+		node = new DT.Node(node);
+		
+		double r = My.rndDouble(0, 1, seed*node.childs.size());
+		if(r > mutationRate){
+			return node;
+		}
+
+		HashMap<String, ArrayList<String>> labels = dt.labels;
+		String[] attrs = dt.attributes;
+
+		String breakPoint = null;
+		for(String att:attrs){
+			if(att.compareTo(targetAttr)==0) continue;
+			DT.Node xi = node.DFSFindNodeByAttr(att);
+
+			if(xi!=null){
+				breakPoint = att;
+				break;
+			}
+		}
+		if(breakPoint==null) return node;
+
+		ArrayList<String> bruh = new ArrayList<>(Arrays.asList(attrs));
+		bruh.remove(targetAttr);
+
+		My.cout("Attrs: "+Arrays.toString(bruh.toArray()));
+
+		String highGainAttr = null; 
+		while(breakPoint!=highGainAttr && bruh.size()>0){
+			highGainAttr = null;
+			double highGainVal = Double.NEGATIVE_INFINITY;
+			for(String attr:bruh){
+				double gain = dt.calculateGain(targetAttr,attr);
+				if(gain>highGainVal){
+					highGainAttr = attr;
+					highGainVal = gain;
+				}
+			}
+			bruh.remove(highGainAttr);
+		}
+		bruh.add(breakPoint);
+
+		DT.Node newSubTree = dt.RandomID3(labels, targetAttr, bruh, seed);
+
+		ArrayList<String> possVals = dt.possibleValuesForAttr(highGainAttr);
+
+		for(String val:possVals){
+			if(node.hasLabel(val) && !node.getChild(val).isLeaf())
+				continue;
+			node.addChild(val, newSubTree);
+			break;
+		}
+
+		return node;
+		
+	}
+
+	public static DT.Node[] CrossOver(DT.Node[] nodes, DT dt, double crossOverRate, long seed){
+		ArrayList<DT.Node> newNodes = new ArrayList<>();
+
+		String[] attrs = dt.attributes;
+
+		attrs = shuffleArray(attrs, seed*123456789*attrs.length);
+
+		for(int i=0;i<nodes.length;i++){
+			for(int j=i+1;j<nodes.length;j++){
+				if(i == j) continue;
+
+				double r = My.rndDouble(0, 1, seed*(i+j));
+				if(r > crossOverRate){
+					continue;
+				}
+
+				DT.Node rootI = nodes[i];
+				DT.Node rootJ = nodes[j];
+
+				String breakPoint = null;
+				for(String att:attrs){
+					DT.Node xi = rootI.DFSFindNodeByAttr(att);
+					DT.Node xj = rootJ.DFSFindNodeByAttr(att);
+
+					if(xi!=null && xj!=null){
+						if(xi.isLeaf() || xj.isLeaf()) continue;
+
+						breakPoint = att;
+						break;
+					}
+				}
+				if(breakPoint==null) continue;
+				
+				rootI = new DT.Node(rootI);
+				rootJ = new DT.Node(rootJ);
+
+				//parents of subtrees
+				DT.Node xi = rootI.DFSFindNodeByAttr(breakPoint);
+				DT.Node xj = rootJ.DFSFindNodeByAttr(breakPoint);
+
+				String[] possVals = dt.possibleValuesForAttr(breakPoint).toArray(new String[0]);
+
+				int rndIndex = My.rndInt(0, possVals.length-1, seed*123456789*possVals.length);
+				String breakVal = possVals[rndIndex];
+				
+				//subtrees
+				DT.Node xiSubTree = rootI.DFSFindNodeByLabel(breakPoint, breakVal);
+				DT.Node xjSubTree = rootJ.DFSFindNodeByLabel(breakPoint, breakVal);
+
+				xi.removeChild(breakVal);
+				xi.addChild(breakVal, xjSubTree);
+				xj.removeChild(breakVal);
+				xj.addChild(breakVal, xiSubTree);
+
+				//adding to list of childs
+				newNodes.add(rootI);
+				newNodes.add(rootJ);
+
+			}
+		}
+
+		return newNodes.toArray(new DT.Node[0]);
 	}
 
     public static void m0(){
@@ -294,9 +670,9 @@ public class myMain{
 
 		double correct = 0; 
 
-		for(int i=0; i<testData.size(); i++){
-			double[] input = testData.get(i);
-			double[] expOut = testOutData.get(i);
+		for(int i=0; i<dataset.size(); i++){
+			double[] input = dataset.get(i);
+			double[] expOut = classSet.get(i);
 
 			double[][] res = net.process(input, factor);
 	
@@ -309,7 +685,7 @@ public class myMain{
 			if(Arrays.equals(res[1], expOut)) correct++;
 		}
 
-		My.cout("SuccessRate: "+(correct/testData.size()));
+		My.cout("SuccessRate: "+My.stepify(correct/dataset.size()*100,0.01)+"%");
 	}
 
 	public static <T> T[] shuffleArray(T[] ar, long seed){
@@ -332,27 +708,20 @@ public class myMain{
 
 		//[number of inputs][inputSize]
 		double[][] p = new double[][]{
-			{0,0,0},
-			{0,1,0},
-			{0,1,1},
-			{1,0,1},
-			{1,1,0},
-			{0,0,1},
-			{1,0,0},
-			// {-1,-1,-1},
+			{2,3},
+			{3,2},
 		};
 		//[number of inputs][outputSize]
 		double[][] t = new double[][]{
-			{1},{0},{1},{1},{1},{0},{0}
-			// {-1, -1},
+			{1},{0}
 		};
 
-		double acc = 0.001;
-		double lRate = 1.5;
+		double acc = 0.01;
+		double lRate = 0.8;
 		boolean isBipolar = false;
 		long seed = 20;
 
-		int[] instSizes = {4};
+		int[] instSizes = {2};
 		
 		NNetwork net = new NNetwork(p[0].length, instSizes, t[0].length);
 
@@ -363,7 +732,7 @@ public class myMain{
 				for(int c=0;c<mat[r].length;c++){
 					mat[r][c] = My.stepify(
 						My.rndDouble(
-							-0.5, 0.5, (-(r+c)*seed + 2*(r-c)*seed + 2*(c-r)*seed - (mat.length-mat[r].length))*1234567890
+							0, 0.5, (-(r+c)*seed + 2*(r-c)*seed + 2*(c-r)*seed - (mat.length-mat[r].length))*1234567890
 						), acc
 					);
 					// mat[r][c] = 0;
@@ -378,7 +747,7 @@ public class myMain{
 		net.accuracy = acc;
 
 		for(int i=0;i<net.activationFuncs.length;i++){
-			net.activationFuncs[i] = "sigmoid";
+			net.activationFuncs[i] = "relu";
 		}
 		net.outputFunc = "relu";
 		// net.activationFuncs[0] = "relu";
@@ -394,7 +763,7 @@ public class myMain{
 		/// TESTING NETWORK
 
 		double[][] tests = {
-			{0,1,0}, {1,1,0}, {0,1,1}, {0,0,1}
+			{0,3},{2,0},{2,3},{0,0}
 		};
 
 		for(int _p=0;_p<tests.length;_p++){
