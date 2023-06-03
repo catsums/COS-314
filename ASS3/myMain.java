@@ -220,6 +220,8 @@ public class myMain{
 				
 			}
 			double fitness = (corr/len);
+			My.cout("Node Count: "+ch.DFSCountNodes());
+			My.cout("Node Depth: "+ch.DFSDepth());
 			My.cout("Fitness: "+fitness);
 		}
 		
@@ -268,6 +270,88 @@ public class myMain{
 
 	}
 
+	public static DT.Node GPClassfication(DT dt, String targetAttr, ArrayList<ArrayList<String>> data, int initPop, int iterations, double mutationRate, double crossOverRate, long seed){
+		int MAX_CAPACITY = 200;
+		int MAX_SIZE = 100;
+
+		Comparator<? super DT.Node> sortingAlgo = (a,b)->{
+			double aVal = GetFitnessOfNode(a, data, dt, targetAttr);
+			double bVal = GetFitnessOfNode(a, data, dt, targetAttr);
+			return (int) (bVal - aVal);
+		};
+
+		ArrayList<DT.Node> population = new ArrayList<>();
+		///generate population
+		My.cout("Generating Population...");
+		for(int i=0;i<initPop;i++){
+			DT.Node newNode = dt.RandomID3(targetAttr, seed * i * 123456789 * (i+1));
+			population.add(newNode);
+		}
+
+		//Evaluating each object
+		My.cout("Evaluating First Population...");
+		for(DT.Node node:population){
+			if(node.DFSCountNodes() >= MAX_SIZE){
+				population.remove(node);
+			}
+		}
+
+		My.cout("Start Population: "+population.size());
+
+		ArrayList<DT.Node> oldGen = (ArrayList) population.clone();
+		ArrayList<DT.Node> lastGen = (ArrayList) population.clone();
+		int iters = 0;
+
+		while(iters<iterations && population.size() > 0){
+			//selecting parents
+			ArrayList<DT.Node> parents = (ArrayList) oldGen.clone();
+
+			parents.sort(sortingAlgo);
+
+			//reproduce parents
+			DT.Node[] _childs = CrossOver(population.toArray(new DT.Node[0]), dt, crossOverRate, seed*iters);
+			ArrayList<DT.Node> childs = new ArrayList<>(Arrays.asList(_childs));
+
+			//mutate parents or old gen
+			for(int i=0; i<oldGen.size(); i++){
+				DT.Node m = oldGen.get(i);
+				m = Mutate(m, targetAttr, dt, mutationRate, seed*i);
+				oldGen.set(i, m);
+			}
+
+			for(DT.Node node:childs){
+				if(node.DFSCountNodes() >= MAX_SIZE){
+					childs.remove(node);
+				}
+			}
+
+		}
+
+		return null;
+	}
+
+	public static double GetFitnessOfNode(DT.Node node, ArrayList<ArrayList<String>> dataset, DT dt, String targetAttr){
+		double correct = 0;
+		double len = dataset.size();
+
+		if(len<=0) return 0;
+
+		int index = new ArrayList<>(Arrays.asList(dt.attributes)).indexOf(targetAttr);
+
+		for(ArrayList<String> data:dataset){
+			String expOutput = data.get(index);
+			String output = dt.decideLabel(node, data);
+			if(output.compareTo(expOutput)==0){
+				correct++;
+			}
+		}
+
+		double successRate = (correct/len);
+
+		return successRate;
+
+	}
+
 	public static DT.Node Mutate(DT.Node node, String targetAttr, DT dt, double mutationRate, long seed){
 
 		node = new DT.Node(node);
@@ -294,8 +378,6 @@ public class myMain{
 
 		ArrayList<String> bruh = new ArrayList<>(Arrays.asList(attrs));
 		bruh.remove(targetAttr);
-
-		My.cout("Attrs: "+Arrays.toString(bruh.toArray()));
 
 		String highGainAttr = null; 
 		while(breakPoint!=highGainAttr && bruh.size()>0){
@@ -332,16 +414,17 @@ public class myMain{
 
 		String[] attrs = dt.attributes;
 
-		attrs = shuffleArray(attrs, seed*123456789*attrs.length);
-
+		
 		for(int i=0;i<nodes.length;i++){
 			for(int j=i+1;j<nodes.length;j++){
 				if(i == j) continue;
-
+				
 				double r = My.rndDouble(0, 1, seed*(i+j));
 				if(r > crossOverRate){
 					continue;
 				}
+				
+				attrs = shuffleArray(attrs, seed*123456789*(j-i));
 
 				DT.Node rootI = nodes[i];
 				DT.Node rootJ = nodes[j];
@@ -369,8 +452,8 @@ public class myMain{
 
 				String[] possVals = dt.possibleValuesForAttr(breakPoint).toArray(new String[0]);
 
-				int rndIndex = My.rndInt(0, possVals.length-1, seed*123456789*possVals.length);
-				String breakVal = possVals[rndIndex];
+				possVals = shuffleArray(possVals, seed*123456789*possVals.length);
+				String breakVal = possVals[0];
 				
 				//subtrees
 				DT.Node xiSubTree = rootI.DFSFindNodeByLabel(breakPoint, breakVal);

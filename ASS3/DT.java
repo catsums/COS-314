@@ -28,6 +28,44 @@ public class DT {
 			}
 		}
 
+		public int DFSCountNodes(){
+			int count = 1;
+			if(isLeaf()) return count;
+
+			for(String key:childs.keySet()){
+				Node child = childs.get(key);
+				if(child==null) continue;
+
+				count += child.DFSCountNodes();
+			}
+
+			return count;
+
+		}
+
+		public int DFSDepth(){
+			return DFSDepth(0);
+		}
+		public int DFSDepth(int depth){
+			if(isLeaf()){
+				// My.cout("Node: "+attr+" depth: "+(depth+1));
+				return depth;
+			}
+
+			int newDepth = depth;
+
+			for(String key:childs.keySet()){
+				Node child = childs.get(key);
+				if(child==null) continue;
+
+				int d = child.DFSDepth(depth+1);
+				if(d>newDepth) newDepth = d;
+			}
+			
+			// My.cout("Node: "+attr+" depth: "+(depth));
+			return newDepth;
+		}
+
 		public Node DFSFindNodeByLabel(String att, String label){
 			Node parent = DFSFindNodeByAttr(att);
 
@@ -102,7 +140,7 @@ public class DT {
 		
 		public String getLabelForChild(Node child){
 			if(child==null) return null;
-			
+
 			for(String k:childs.keySet()){
 				if(childs.get(k)==child){
 					return k;
