@@ -800,26 +800,17 @@ public class myMain{
 		ArrayList<double[]> fixSet = new ArrayList<>();
 		ArrayList<double[]> fixOutSet = new ArrayList<>();
 
-		// String[][] attributes = {
-		// 	{"no-recurrence-events", "recurrence-events"},
-		// 	{"10-19", "20-29", "30-39", "40-49", "50-59", "60-69", "70-79", "80-89", "90-99"},
-		// 	{"lt40", "ge40", "premeno"},
-		// 	{"0-4", "5-9", "10-14", "15-19", "20-24", "25-29", "30-34", "35-39", "40-44","45-49", "50-54", "55-59"},
-		// 	{"0-2", "3-5", "6-8", "9-11", "12-14", "15-17", "18-20", "21-23", "24-26","27-29", "30-32", "33-35", "36-39"},
-		// 	{"yes", "no"},
-		// 	{"1", "2", "3"},
-		// 	{"left", "right"},
-		// 	{"left_up", "left_low", "right_up", "right_low", "central"},
-		// 	{"yes", "no"},
-		// };
+		int classIndex = 0;
+		int otherClassIndex = -1;
+		// int classIndex = 0;
 
-		double ratio = (0.5);
+		double ratio = (0.8);
 
 		// long _seed = 9_876_543_210l;
 		long _seed = 100;
 
 		double acc = 0.001;
-		double lRate = 0.4;
+		double lRate = 0.02;
 		boolean isBipolar = false;
 
 		double factor = 0;
@@ -870,6 +861,11 @@ public class myMain{
 				}
 			}
 		}
+
+		classIndex = My.mod(classIndex , attrs.size() );
+		otherClassIndex = My.mod(otherClassIndex , attrs.size() );
+		My.cout("Possible labels for Class: "+Arrays.toString(attrs.get(classIndex).toArray()));
+
 		for(String[] vars:_lines){
 			ArrayList<Double> data = new ArrayList<>();
 			ArrayList<Double> classifier = new ArrayList<>();
@@ -888,13 +884,23 @@ public class myMain{
 					}
 				}
 				if(attr!=-1){
-					if(i==0){
+					if(i==classIndex){
 						double k = ((attr+1) / labels.size());
-						k = (k>0.5 ? 1 : 0);
+						k = (k>0.5 ? 1 : (isBipolar ? -1 : 0));
 						classifier.add(k);
-						classifier.add((double)(k>0 ? 0 : 1));
+						classifier.add((double)(k<0.5 ? 1 : (isBipolar ? -1 : 0)));
+					}else if(i==otherClassIndex){
+						double k = ((attr+1) / labels.size());
+						k = (k>0.5 ? 1 : (isBipolar ? -1 : 0));
+						classifier.add((double)(k<0.5 ? 1 : (isBipolar ? -1 : 0)));
+						classifier.add(k);
+						// classifier.add((double)(k==1 ? (isBipolar ? -1 : 0) : 1));
+						// classifier.add(1d);
+						// classifier.add(k);
+						// classifier.add(k);
 					}
-					double k = ((attr+1) / labels.size());
+					// double k = ((attr+1) / labels.size());
+					double k = ((attr+1));
 					// k = (k>0 ? 1 : 0);
 					data.add(My.stepify(k, acc));
 					// data[i-1] = attr;
@@ -987,7 +993,7 @@ public class myMain{
 		net.learningRate = lRate;
 
 		net.activationFuncs = new String[]{
-			"relu","sigmoid", "sigmoid", "sigmoid"
+			"sigmoid","sigmoid", "sigmoid", "sigmoid"
 		};
 		// net.activationFuncs[0] = "sigmoid";
 		// for(int f=0;f<net.activationFuncs.length;f++){
@@ -995,17 +1001,6 @@ public class myMain{
 		// }
 		// net.setOutputActivationFunc("relu"); 
 
-		// for(int en=0;en<net.tensor.length;en++){
-		// 	net.tensor[en] = initMatrix(net.tensor[en].length, net.tensor[en][0].length, -0.5, 0.5, _seed);
-		// 	double[][] mat = net.tensor[en];
-		// 	for(int r=0;r<mat.length;r++){
-		// 		for(int c=0;c<mat[r].length;c++){
-		// 			// if(r==0) mat[0][c] = 1;
-		// 			mat[r][c] = My.stepify(mat[r][c], acc);
-		// 		}
-		// 	}
-		// 	My.cout("M"+en+": \n"+printMatrix(net.tensor[en]));
-		// }
 
 		net.trainNetwork(
 			trainData.toArray(new double[0][]),
@@ -1021,7 +1016,12 @@ public class myMain{
 
 		My.cout("");
 
-		double correct = 0; 
+		double correct = 0;
+
+		int _tP = 0;
+		int _fP = 0;
+		int _tN = 0;
+		int _fN = 0;
 
 		for(int i=0; i<testData.size(); i++){
 			double[] input = testData.get(i);
@@ -1031,18 +1031,45 @@ public class myMain{
 
 			double[] tOut = new double[res[0].length];
 			for(int c=0;c<tOut.length;c++){
-				tOut[c] = (res[0][c] >= 0.5 ? 1 : 0);
+				if(isBipolar){
+					tOut[c] = (res[0][c] >= 0 ? 1 : -1);
+				}else{
+					tOut[c] = (res[0][c] >= 0.5 ? 1 : 0);
+				}
 			}
-	
-			// My.cout("In: "+printVector(input));
-			My.cout("Out: "+printVector(res[0])+"OutDIR: "+printVector(res[1]));
-			My.cout("ActualOut: "+printVector(tOut)+"ExpOut: "+printVector(expOut));
-			My.cout("------");
+			
+			// My.cout("Out: "+printVector(res[0])+"OutDIR: "+printVector(res[1]));
+			// My.cout("ActualOut: "+printVector(tOut)+"ExpOut: "+printVector(expOut));
+			// My.cout("------");
 
-			if(Arrays.equals(expOut, tOut)) correct++;
+			if(Arrays.equals(expOut, tOut)){
+				correct++;
+				if(expOut[0] > 0){
+					_tP++;
+				}else{
+					_tN++;
+				}
+			}else{
+				if(tOut[0] > 0){
+					_fP++;
+				}else{
+					_fN++;
+				}
+			}
+
 		}
 
-		My.cout("SuccessRate: "+My.stepify(correct/testData.size()*100,0.01)+"%");
+		double succRate = My.stepify(correct/testData.size()*100,0.001);
+
+		double fscore = _tP / (_tP + 0.5 * (_fP+_fN));
+		fscore = My.stepify(fscore*100, 0.001);
+		//tp / (tp + 0.5 * (fp+fn))
+
+		My.cout("Accuracy: "+succRate+"%");
+		My.cout("TruePos "+_tP+"\t TrueNeg: "+_tN+"");
+		My.cout("FalsePos: "+_fP+"\t FalseNeg: "+_fN+"");
+		My.cout("FScore: "+fscore+"%");
+
 	}
 
 	public static <T> T[] shuffleArray(T[] ar, long seed){
