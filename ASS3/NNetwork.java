@@ -202,7 +202,7 @@ public class NNetwork implements Serializable{
 				if(
 					Arrays.deepEquals(FN, prev_FN)
 				){
-					// My.cout("Convergence in network detected. No changes in FN");
+					My.cout("Convergence in network detected. No changes in FN");
 					continue;
 				}else{
 					conv = false;
