@@ -9,10 +9,67 @@ public class myMain{
 	public static void main(String[] args) throws Exception {
 		My.cout("| MAIN START |"); My.cout("---------------");
 
-		m2();
+		m5();
 
 		My.cout("---------------"); My.cout("| MAIN END |");
 		return;
+	}
+
+	public static void m5(){
+		///settings
+
+		double ratio = 0.5;
+		double acc = 0.001;
+		String filename = "breast-cancer.data";
+		long seed = 123_456_789l;
+		int classIndex = 0;
+
+		double crossOverRate = 0.5;
+		double mutationRate = 0.5;
+		
+		double factor = 0;
+		double lRate = 0.5;
+		boolean isBipolar = false;
+
+		boolean saveFlag = false;
+
+		Scanner inputSc = new Scanner(System.in);
+
+		My.cout("General Training Params: \n___________");
+
+		System.out.print("Enter Ratio (0 to 1): "); double _ratio = inputSc.nextDouble();
+		if(_ratio>0 && _ratio<1) ratio = _ratio;
+
+		System.out.print("Enter Filename: "); String _filename = inputSc.next();
+		filename = _filename;
+
+		System.out.print("Enter Class' Index (if it's 1st Attribute, choose 0): "); int _classIndex = inputSc.nextInt();
+		if(_classIndex>=0) classIndex = _classIndex;
+
+		System.out.print("Enter Seed (> 0): "); long _seed = inputSc.nextLong();
+		if(_seed>0) seed = _seed;
+
+		My.cout("ANN Params: \n___________");
+		
+		System.out.print("Enter Learning Rate: "); double _lRate = inputSc.nextDouble();
+		if(_lRate>0) lRate = _lRate;
+		
+		System.out.print("Is Data Bipolar?: "); boolean _bipolar = inputSc.nextBoolean();
+		isBipolar = _bipolar;
+
+		My.cout("GP Params: \n___________");
+		
+		System.out.print("Enter CrossOver Rate: "); double _crossRate = inputSc.nextDouble();
+		if(_crossRate>0 && _crossRate<1) crossOverRate = _crossRate;
+		
+		System.out.print("Enter Mutation Rate: "); double _mutRate = inputSc.nextDouble();
+		if(_mutRate>0 && _mutRate<1) mutationRate = _mutRate;
+		
+		My.cout("-----------------");
+		My.cout("Programs are about to run.");
+		System.out.print("Save Data?: "); boolean _save = inputSc.nextBoolean();
+		saveFlag = _save;
+
 	}
 
 	public static void m4(){
@@ -23,18 +80,9 @@ public class myMain{
 
 		ArrayList<ArrayList<String>> dataset = new ArrayList<>();
 		
-		String[][] attributes = {
-			{"no-recurrence-events", "recurrence-events"},
-			{"10-19", "20-29", "30-39", "40-49", "50-59", "60-69", "70-79", "80-89", "90-99"},
-			{"lt40", "ge40", "premeno"},
-			{"0-4", "5-9", "10-14", "15-19", "20-24", "25-29", "30-34", "35-39", "40-44","45-49", "50-54", "55-59"},
-			{"0-2", "3-5", "6-8", "9-11", "12-14", "15-17", "18-20", "21-23", "24-26","27-29", "30-32", "33-35", "36-39"},
-			{"yes", "no"},
-			{"1", "2", "3"},
-			{"left", "right"},
-			{"left_up", "left_low", "right_up", "right_low", "central"},
-			{"yes", "no"},
-		};
+		int classIndex = 0;
+		int otherClassIndex = -1;
+		// int classIndex = 0;
 
 		double ratio = (0.8);
 		double acc = 0.01;
@@ -74,23 +122,51 @@ public class myMain{
 		_lines = shuffleArray(_lines, _seed);
 		_lines = shuffleArray(_lines, _seed);
 
+		ArrayList<ArrayList<String>> attrs = new ArrayList<>();
+
+		for(String[] vars:_lines){
+			if(attrs.size()<vars.length){
+				for(int i=attrs.size();i<vars.length;i++){
+					attrs.add(new ArrayList<>());
+				}
+			}
+	
+			for(int i=0;i<vars.length;i++){
+				String _label = vars[i];
+				ArrayList<String> labels = attrs.get(i);
+	
+				int labelIndex = labels.indexOf(_label);
+				if(labelIndex<0){
+					if(_label.compareTo("?")!=0){
+						labelIndex = labels.size();
+						labels.add(_label);
+					}
+				}
+			}
+		}
+
+		classIndex = My.mod(classIndex , attrs.size() );
+		otherClassIndex = My.mod(otherClassIndex , attrs.size() );
+		My.cout("Possible labels for Class: "+Arrays.toString(attrs.get(classIndex).toArray()));
+
 		for(String[] vars:_lines){
 			ArrayList<String> data = new ArrayList<>();
 
 			boolean missing = false;
 
-			for(int i=0;i<attributes.length;i++){
+			for(int i=0;i<vars.length;i++){
 				int attr = -1;
-				for(int a=0;a<attributes[i].length;a++){
+				ArrayList<String> labels = attrs.get(i);
+				for(int a=0;a<labels.size();a++){
 					String _var = vars[i].trim().toLowerCase();
-					String _att = attributes[i][a].trim().toLowerCase();
+					String _att = labels.get(a).trim().toLowerCase();
 					if(_var.compareTo(_att)==0){
 						attr = a;
 						break;
 					}
 				}
 				if(attr!=-1){
-					data.add(attributes[i][attr]);
+					data.add(labels.get(attr));
 				}else{
 					missing = true;
 					data.add("?");
@@ -104,10 +180,15 @@ public class myMain{
 			}
 		}
 
+		ArrayList<String> _attrs = new ArrayList<>();
+		for(int i=0;i<attrs.size();i++){
+			_attrs.add(""+i+"");
+		}
 
-		DT tree = new DT(new String[]{
-			"Class","age","menopause","tumor-size","inv-nodes","node-caps","deg-malig","breast","breast-quad","irradiat"
-		});
+		// DT tree = new DT(new String[]{
+		// 	"Class","age","menopause","tumor-size","inv-nodes","node-caps","deg-malig","breast","breast-quad","irradiat"
+		// });
+		DT tree = new DT(_attrs.toArray(new String[0]));
 
 		for(int i=0;i<(int)(ratio * (double)dataset.size()); i++){
 			trainSet.add(dataset.get(i));
@@ -124,15 +205,17 @@ public class myMain{
 			tree.addData(data.toArray(new String[0]));
 		}
 
-		String chosenAtt = "Class";
+		// String chosenAtt = "Class";
+		String chosenAtt = ""+classIndex+"";
 		int attIndex = Arrays.asList(tree.attributes).indexOf(chosenAtt);
 
 		My.cout("Attr: "+chosenAtt+" ("+attIndex+")");
 
-		DT.Node finalRoot = GPClassfication(tree, chosenAtt, testSet, 100, 100, 0.8, 0.2, _seed);
+		DT.Node finalRoot = GPClassfication(tree, chosenAtt, testSet, 100, 50, 0.8, 0.2, _seed);
 
 		My.cout("Final Tree:\n"+finalRoot);
 		My.cout("Fitness:\n"+GetFitnessOfNode(finalRoot, testSet, tree, chosenAtt));
+		My.cout("FScore:\n"+GetFScoreOfNode(finalRoot, testSet, tree, chosenAtt));
 
 		// for(int i=0;i<tree.attributes.length;i++){
 		// 	if(tree.attributes[i].compareTo(chosenAtt)==0){
@@ -467,6 +550,12 @@ public class myMain{
 				for(int i=0;i<MAX_CAPACITY/2;i++) temp.add(population.get(i));
 				population = temp;
 			}
+			for(int i=0;i<population.size();i++){
+				DT.Node m = population.get(i);
+				m = Trim(m, dt, targetAttr, seed*(i+1+2*i));
+				population.set(i,m);
+			}
+
 			population.sort(sortingAlgo);
 
 			DT.Node topNode = population.get(0);
@@ -509,6 +598,41 @@ public class myMain{
 		double successRate = (correct/len);
 
 		return successRate;
+
+	}
+	public static double GetFScoreOfNode(DT.Node node, ArrayList<ArrayList<String>> dataset, DT dt, String targetAttr){
+		double correct = 0;
+		double len = dataset.size();
+
+		if(len<=0) return 0;
+
+		int index = new ArrayList<>(Arrays.asList(dt.attributes)).indexOf(targetAttr);
+		ArrayList<String> possVals = dt.possibleValuesForAttr(targetAttr);
+		int tp = 0, fp = 0, tn = 0, fn = 0;
+
+		for(ArrayList<String> data:dataset){
+			String expOutput = data.get(index);
+			String output = dt.decideLabel(node, data);
+			if(output==null) continue;
+			if(output.compareTo(expOutput)==0){
+				correct++;
+				if(expOutput.compareTo(possVals.get(0))==0){
+					tn++;
+				}else{
+					tp++;
+				}
+			}else{
+				if(output.compareTo(possVals.get(0))==0){
+					fn++;
+				}else{
+					fp++;
+				}
+			}
+		}
+
+		double fscore = tp / (tp + 0.5 * (fp+fn));
+
+		return fscore;
 
 	}
 
@@ -873,7 +997,7 @@ public class myMain{
 			boolean dataMissing = false;
 
 			for(int i=0;i<vars.length;i++){
-				double attr = -1;
+				int attr = -1;
 				ArrayList<String> labels = attrs.get(i);
 				for(int a=0;a<labels.size();a++){
 					String _var = vars[i].trim().toLowerCase();
