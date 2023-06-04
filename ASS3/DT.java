@@ -5,9 +5,9 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.Time;
 
-public class DT {
+public class DT implements Serializable{
 
-	public static class Node{
+	public static class Node implements Serializable{
 		public String attr;
 		public HashMap<String,Node> childs = new HashMap<>();
 
@@ -48,7 +48,6 @@ public class DT {
 		}
 		public int DFSDepth(int depth){
 			if(isLeaf()){
-				// My.cout("Node: "+attr+" depth: "+(depth+1));
 				return depth;
 			}
 
@@ -62,7 +61,6 @@ public class DT {
 				if(d>newDepth) newDepth = d;
 			}
 			
-			// My.cout("Node: "+attr+" depth: "+(depth));
 			return newDepth;
 		}
 
@@ -116,6 +114,22 @@ public class DT {
 			}
 			return null;
 		}
+		public ArrayList<Node> DFSFindNodesByAttr(String attr){
+			return DFSFindNodesByAttr(attr, new ArrayList<>());
+		}
+		public ArrayList<Node> DFSFindNodesByAttr(String attr, ArrayList<Node> list){
+
+			for(String key:childs.keySet()){
+				Node child = childs.get(key);
+				if(child.attr.compareTo(attr)==0){
+					list.add(child);
+				}
+				if(!child.isLeaf()){
+					list = child.DFSFindNodesByAttr(attr, list);
+				}
+			}
+			return list;
+		}
 
 		public boolean ownsChild(Node child){
 			for(String key:childs.keySet()){
@@ -156,6 +170,16 @@ public class DT {
 		public Node removeChild(String label){
 			if(!hasLabel(label)) return null;
 			return childs.remove(label);
+		}
+
+		public Node setChild(String label, Node newNode){
+			Node oldNode = null;
+			if(hasLabel(label)){
+				oldNode = getChild(label);
+			}
+			addChild(label, newNode);
+
+			return oldNode;
 		}
 
 		public boolean isLeaf(){
@@ -203,7 +227,7 @@ public class DT {
 	}
 
 	public HashMap<String, ArrayList<String>> labels = new HashMap<>();
-	protected String[] attributes;
+	public String[] attributes;
 
 	public DT(String[] attributes){
 		labels = new HashMap<>();
@@ -306,7 +330,7 @@ public class DT {
 		String mostCommon = null;
 		for(String label:list){
 			if(mostCommon==null) mostCommon = label;
-			else if(labelCount.get(label) > labelCount.get(onlyLabel)){
+			else if(labelCount.get(label) > labelCount.get(mostCommon)){
 				mostCommon = label;
 			}
 		}
@@ -379,12 +403,12 @@ public class DT {
 		}
 		newAttrs.remove(targetAttr);
 
-		return RandomID3(labels, targetAttr, newAttrs, seed);
+		return RandomID3(labels, targetAttr, newAttrs, seed, 2);
 	}
 
-	public Node RandomID3(HashMap<String,ArrayList<String>> labelSet, String targetAttr, ArrayList<String> attrs, long seed){
+	public Node RandomID3(HashMap<String,ArrayList<String>> labelSet, String targetAttr, ArrayList<String> attrs, long seed, int iter){
 		Node newNode = new Node();
-		
+
 		//check if labelSet for targetAttr have the same labels
 		HashMap<String, Integer> labelCount = new HashMap<>();
 		String onlyLabel = null; boolean onlyOneLabel = true;
@@ -404,7 +428,7 @@ public class DT {
 			return newNode;
 		}
 		//check if attributeSet is empty
-		int rndIndex = My.rndInt(0, list.length-1, (long)My.rndInt(123456789,987654321, seed));
+		int rndIndex = My.rndInt(0, list.length-1, (long)My.rndInt(123456789,987654321, seed)*iter);
 		String randomLabel = list[rndIndex];
 		if(attrs.size()<=0){
 			newNode.attr = randomLabel;
@@ -412,19 +436,15 @@ public class DT {
 		}
 
 		//get attr by random
-		rndIndex = My.rndInt(0, attrs.size()-1, seed);
+		rndIndex = My.rndInt(0, attrs.size()-1, seed*12345*labelSet.size());
 		String highGainAttr = attrs.get(rndIndex);
-		
 		newNode.attr = highGainAttr;
 		
 		String[] labelList = labelSet.get(newNode.attr).toArray(new String[0]);
-		String[] setKeys = labelSet.keySet().toArray(new String[0]);
-		
-		// ArrayList<String> newAttrs = (ArrayList) attrs.clone();
+
 		ArrayList<String> newAttrs = attrs;
 		newAttrs.remove(newNode.attr);
-		// My.cout(newNode.attr + " removed.");
-		
+
 		ArrayList<String> counted = new ArrayList<>();
 		
 		for(String label:labelList){
@@ -436,6 +456,7 @@ public class DT {
 			
 			//create subset of new labelset
 			HashMap<String,ArrayList<String>> newLabelSet = new HashMap<>();
+
 			for(String key:labelSet.keySet()){
 				newLabelSet.put(key, new ArrayList<>());
 			}
@@ -450,7 +471,7 @@ public class DT {
 			if(newLabelSet.get(newNode.attr).size()<=0){
 				childNode = new Node(randomLabel);
 			}else{
-				childNode = RandomID3(newLabelSet, targetAttr, newAttrs, seed*123456789);
+				childNode = RandomID3(newLabelSet, targetAttr, newAttrs, seed*123456789, iter*(iter+1));
 			}
 			// My.cout(newNode.attr+" added "+childNode.attr+" for "+label);
 
@@ -458,6 +479,7 @@ public class DT {
 		}
 
 		return newNode;
+
 	}
 
 	public double calculateGain(String attr, String condAttr){

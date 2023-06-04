@@ -1,6 +1,7 @@
 import java.lang.reflect.Array;
 import java.lang.Math;
 import java.util.*;
+import java.io.*;
 
 public class My{
 	public static final String ANSI_RESET = "\u001B[0m";
@@ -301,19 +302,43 @@ public class My{
 		return Math.round((value + Math.ulp(1)) / step) * step;
 	}
 
-	// function stepify(value, step) {
-	// 	if (step == 0) return value;
-	// 	if (step == Infinity) return 1;
-	// 	return Math.round((value + Number.EPSILON) / step) * step;
-	//   }
+	public static <T> T[] shuffleArray(T[] ar, long seed){
+		ar = ar.clone();
+		//Fisher–Yates shuffle
+		for (int i = ar.length - 1; i > 0; i--){
+			int index = My.rndInt(0, i, seed);
+			// Simple swap
+			T a = ar[index];
+			ar[index] = ar[i];
+			ar[i] = a;
+		}
+		return ar;
+	}
 
-	// public static <T> ArrayList<T> deepClone(ArrayList<T> arr){
-	// 	ArrayList<T> newArr = new ArrayList<T>();
-	// 	for(T item:arr){
-	// 		newArr.add(item);
+	// public static void writeToFile(ArrayList<String> lines, String filePath) {
+	// 	try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
+	// 		for (String line : lines) {
+	// 			writer.write(line);
+	// 			writer.newLine();
+	// 		}
+	// 		System.out.println("File written successfully.");
+	// 	} catch (IOException e) {
+	// 		System.out.println("An error occurred while writing to the file: " + e.getMessage());
 	// 	}
+	// }
 
-	// 	return newArr;
+	// public static ArrayList<String> readFromFile(String filePath) {
+	// 	ArrayList<String> lines = new ArrayList<>();
+	// 	try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+	// 		String line;
+	// 		while ((line = reader.readLine()) != null) {
+	// 			lines.add(line);
+	// 		}
+	// 		System.out.println("File read successfully.");
+	// 	} catch (IOException e) {
+	// 		System.out.println("An error occurred while reading the file: " + e.getMessage());
+	// 	}
+	// 	return lines;
 	// }
 
 }

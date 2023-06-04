@@ -5,9 +5,10 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.Time;
 
-public class NNetwork implements Serializable{
+public class NNetwork{
 	public double[][][] tensor;
 	public String[] activationFuncs;
+	public String outputFunc = "relu";
 	public double accuracy = 0.001;
 	public double learningRate = 0.69;
 	public boolean isBipolar = true;
@@ -29,15 +30,11 @@ public class NNetwork implements Serializable{
 			tensor[en] = mat;
 		}
 
-		activationFuncs = new String[layerSizes.length];
+		activationFuncs = new String[layerSizes.length-1];
 		for(int i=0;i<activationFuncs.length;i++){
 			activationFuncs[i] = "sigmoid";
 		}
 
-	}
-
-	public void setOutputActivationFunc(String func){
-		activationFuncs[activationFuncs.length-1] = func;
 	}
 
 	public int getInputSize(){
@@ -83,30 +80,23 @@ public class NNetwork implements Serializable{
 				preFN = FN[e-1];
 			}
 
-			// My.cout("e: "+e);
-			
 			for(int i=0; i<J; i++){
 				double _n = V[0][i];
-				
+
 				for(int l=1; l<N; l++){
-					_n += (V[l][i] * preFN[l-1]);
+					_n += V[l][i] * preFN[(l-1)%preFN.length];
 				}
 
 				double _fn = Activate(_n, factor, activationFuncs[e], isBipolar);
-				double _dirfn = DirActivate(_n, factor, activationFuncs[e], isBipolar);
 				_fn = My.stepify(_fn,accuracy);
 
 				eN[e][i] = _n;
 				FN[e][i] = _fn;
 
-				// My.cout("N: "+_n);
-
 				if(e==tensor.length-1){
-					output[i] = _fn;
-					outputDIR[i] = _dirfn;
-					// output[i] = Activate(_n, factor, outputActivation, isBipolar);
-					// outputDIR[i] = DirActivate(_n, factor, outputActivation, isBipolar);
-					
+					output[i] = Activate(_n, factor, outputFunc, isBipolar);
+					outputDIR[i] = DirActivate(_n, factor,outputFunc, isBipolar);
+
 					output[i] = My.stepify(output[i], accuracy);
 					outputDIR[i] = My.stepify(outputDIR[i], accuracy);
 				}
@@ -116,7 +106,7 @@ public class NNetwork implements Serializable{
 		return new double[][]{output, outputDIR};
 	}
 
-	public double[][][] trainNetwork(double[][] inputs, double[][] expectedOutputs, double factor, long seed, long epochLimit){
+	public double[][][] trainNetwork(double[][] inputs, double[][] expectedOutputs, double factor, long epochLimit){
 		double[][][] oldTensor = tensor.clone();
 
 		double acc = accuracy;
@@ -137,33 +127,25 @@ public class NNetwork implements Serializable{
 		double[][] p = inputs;
 		double[][] t = expectedOutputs;
 
-		HashMap<double[],double[]> PTMap = new HashMap<>();
-
-		for(int i=0;i<inputs.length;i++){
-			PTMap.put(p[i], t[i]);
-		}
-		double[][] shiffledInputs = My.shuffleArray(PTMap.keySet().toArray(new double[0][]), 12345*seed*(epochCount*2)*(epochCount+1));
-
 		while(!conv && epochCount<epochLimit){
 			
 			conv = true;
 			
-			int setSize = PTMap.size();
+			int setSize = p.length;
 			
 			double[][] prev_FN = new double[tensor.length][];
 			double[] prevSums = null;
 			double[][] prevERRs = null;
+			// double[][] zeroERRs = new double[tensor.length-1][];
 
 			for(int c=0; c<setSize; c++){
 
-				double[] _p = shiffledInputs[c];
-				double[] _t = PTMap.get(_p);
-				// double[] _p = p[c];
-				// double[] _t = t[c];
+				double[] _p = p[c];
+				double[] _t = t[c];
 
 				double[][] FN = new double[tensor.length][];
 				double[][] dFN = new double[tensor.length][];
-				double[][] ERRs = new double[tensor.length][];
+				double[][] ERRs = new double[tensor.length-1][];
 				
 				/// FEEDFORWARD
 
@@ -175,17 +157,16 @@ public class NNetwork implements Serializable{
 					dFN[e] = new double[J];
 
 					double[] preFN = _p;
-					// double[] postFN = _t;
 
 					if(e>0){
 						preFN = FN[e-1];
 					}
 
 					for(int i=0; i<J; i++){
-						double _n = V[0][i]; //bias
+						double _n = V[0][i];
 	
 						for(int l=1; l<N; l++){
-							_n += V[l][i] * preFN[l-1];
+							_n += V[l][i] * preFN[(l-1)%preFN.length];
 						}
 						double _fn = Activate(_n, factor, activationFuncs[e], isBipolar);
 						double _dirFn = DirActivate(_n, factor, activationFuncs[e], isBipolar);
@@ -197,7 +178,6 @@ public class NNetwork implements Serializable{
 					}
 				}
 
-				
 				// //if the FNs did not change from last time, then theres convergence
 				if(
 					Arrays.deepEquals(FN, prev_FN)
@@ -210,228 +190,166 @@ public class NNetwork implements Serializable{
 				}
 
 				///BACKPROPAGATION
-
-				double partialFN = 0;
-				double totalErr = 0;
-
-				ArrayList<Double> ptFN = null;
 				
-				for(int e=tensor.length-1;e>=0; e--){
+				for(int e=tensor.length-1;e>0; e--){
+					double[][] V = tensor[e-1];
 					double[][] W = tensor[e];
+					int N = V.length;
 					int J = W.length;
 					int M = W[0].length;
-					
-					// My.cout("----"+e+"----");
 
-					// My.cout("M: "+M);
-					// My.cout("J: "+J);
-					
+					double[] FN1 = FN[e-1];
+					double[] dFN1 = dFN[e-1];
 					double[] FN2 = FN[e];
 					double[] dFN2 = dFN[e];
 
-					// My.cout("FN2: "+Arrays.toString(FN2));
-					
-					// My.cout("W:\n"+printMatrix(W)+"\n");
-					
-					if(e==0){
-						for(int i=1;i<J;i++){
-							for(int k=0;k<M;k++){
-								// My.cout("i: "+i+" k:"+k);
-								// My.cout("fn2k: "+FN2[k]);
-								// My.cout("dfn2k: "+dFN2[k]);
-								// My.cout("partialFN:"+partialFN);
+					double[][] VLI = new double[N][J-1]; //li
+					double[][] WIK = new double[J][M]; //ik
+					double[] sumDI = new double[J];
 
-								double Q = ptFN.get(k) * dFN2[k];
-								double delta = (lRate * Q);
-								if(i>0){
-									delta = delta * (_p[i-1]);
-								}
+					double[] QK = new double[M];
+					double[] postFN = _t;
+					if(e<tensor.length-1) postFN = FN[e+1];
 
-								// My.cout("Q: "+Q);
-								// My.cout("delta: "+Q);
-								// My.cout("--");
+					for(int i=0;i<J;i++){
 	
-								W[i][k] += delta;
-	
-								partialFN += (Q * W[i][k]);
-	
+						for(int k=0;k<M;k++){
+							//Calculate the error information term for each node in the output layer
+							//Qk = (tk - f(n2k)) * f'(n2k)
+							//where k = 1 to m
+							
+							// ((k * M) / postFN.len)
+
+							double Qk = (postFN[k%postFN.length] - dFN2[k]);
+							if(prevSums!=null){
+								Qk *= prevSums[k];
 							}
-						}
-					}else{
-						double[][] V = tensor[e-1];
-						int N = V.length;
-						double[][] WIK = new double[J][M]; //ik
-						double[] FN1 = FN[e-1];
-						double[] dFN1 = dFN[e-1];
-						
-						// My.cout("FN1: "+Arrays.toString(FN1));
-						// My.cout("N: "+N);
+							// double Qk = (_t[k] - FN2[k]) * dFN2[k];
+							// double Qk = 0.5 * Math.pow((FN2[k]-_t[k]), 2);
+							
+							QK[k] = My.stepify(Qk, acc);
+							
+							if(i==0){
+								//Calculate the bias correction term for each node in the output layer
+								// DELTA w0k = lRate * Qk
+								//where k = 1 to m
+								double w0k = lRate * Qk;
+								
+								WIK[0][k] = w0k;
 	
-						double[] postFN = _t;
-						if(e<tensor.length-1){
-							postFN = FN[e+1];
-						}
-
-						double[][] VLI = new double[N][J-1]; //li
-
-						// My.cout("V:\n"+printMatrix(V)+"\n");
-						ArrayList<Double> _ptFN = new ArrayList<>();
-						
-						for(int i=1;i<J;i++){
-							double _partialFN = 0;
-							for(int k=0;k<M;k++){
-								// My.cout("i: "+i+" k:"+k);
-								// My.cout("tk: "+_t[k]);
-								// My.cout("fn2k: "+FN2[k]);
-								// My.cout("dfn2k: "+dFN2[k]);
-								// My.cout("diff "+diff);
-								double Q = dFN2[k];
-								double diff;
-								if(e==tensor.length-1){
-									diff = (_t[k]-FN2[k]);
-								}else{
-									// diff = (postFN[k] - FN2[k]);
-									diff = (FN2[k] * ptFN.get(k));
-								}
-								Q = dFN2[k] *  diff;
-								// if(e<tensor.length-1){
-								// 	// My.cout("initQ: "+Q);
-								// 	// My.cout("partialFN:"+partialFN);
-								// 	Q *= partialFN;
-								// }
-
-								double delta = (lRate * Q);
-								if(i>0){
-									delta = delta * (FN1[i-1]);
-								}
-
-								// My.cout("Q: "+Q);
-								// My.cout("delta: "+delta);
-								// My.cout("--");
+								// Qni += Qk * W[0][k];
+							}else{
+								//Calculate the weight correction term for each node in the output layer
+								// DELTA wik = lRate * Qk * f(n1i)
+								//where l = 1 to n
+								//where i = 1 to j
+								double Wik = lRate * Qk * FN1[i-1];
+								
+								WIK[i][k] = Wik;
 	
-								W[i][k] += delta;
-	
-								_partialFN += (Q * W[i][k]);
-	
-								totalErr += Math.pow(diff, 2);
+								
 							}
-							_ptFN.add(_partialFN);
+							
 						}
+					}
+					
+					// My.cout("WeightCorrection for Layer ("+e+"): \n"+printMatrix(WIK));
+					
+					ERRs[e-1] = QK;
+					
 
-						ptFN = _ptFN;
-	
-						totalErr *= 0.5;
-
+					//Update weights in the output layer
+					for(int i=0;i<J;i++){
+						for(int k=0;k<M;k++){
+							W[i][k] += WIK[i][k];
+							W[i][k] = My.stepify(W[i][k],acc);
+						}
+					}
+					
+					
+					//Calculate the sum of delta inputs for each node in the hidden layer
+					// Qni = SUM(Qk * wik)
+					//where k = 1 to m
+					//where i = 0 to j-1
+					for(int i=0;i<J;i++){
+						double Qni = 0;
+						for(int k=0;k<M;k++){
+							double Qk = ERRs[e-1][k];
+							Qni += Qk * W[i][k];
+							// Qni += Qk * WIK;
+						}
+						sumDI[i] = Qni;
 					}
 
+					if(prevSums==null){
+						prevSums = sumDI;
+					}
+
+					// for(int l=0;l<N;l++){
+					// 	for(int i=1;i<J;i++){
+					// 		double Qni = sumDI[i-1];
+		
+					// 		//Calculate the error information term for each node in the hidden layer
+					// 		// Qi = Qni * f'(n1i)
+					// 		//where i = 0 to j-1
+					// 		double Qi = Qni * dFN1[i-1];
+							
+					// 		if(l==0){
+					// 			//Calculate the bias error term for each node in the hidden layer
+					// 			// DELTA v0i = lRate * Qi
+					// 			//where i = 0 to j-1
+					// 			double v0i = lRate * Qi;
+	
+					// 			VLI[0][i-1] = v0i;
+					// 		}else{
+					// 			//Calculate the weight error term for each node in the hidden layer
+					// 			// DELTA vli = lRate * Qi * pl
+					// 			//where l = 1 to n
+					// 			//where i = 0 to j-1
+					// 			double[] preFN = _p;
+					// 			if(e-1>0) preFN = FN[e-2];
+
+					// 			// double Vli  = lRate * Qi * preFN[( (l-1) * (N-1) )/preFN.length];
+					// 			double Vli  = lRate * Qi * preFN[(l-1)%preFN.length];
+	
+					// 			VLI[l][i-1] = Vli;
+					// 		}
+					// 	}
+		
+					// }
+	
+					// //Update weights in the hidden layer
+					// for(int l=0;l<N;l++){
+					// 	for(int i=1;i<J;i++){
+					// 		V[l][i-1] += VLI[l][i-1];
+					// 		V[l][i-1] = My.stepify(V[l][i-1],acc);
+					// 	}
+					// }
 				}
 
-
-				if(totalErr==0){
-					My.cout("Convergence in network detected. No changes in totalErr");
-					conv = true;
-					break;
-				}
-
-				// ArrayList<Double> sumDeltas = null;
 				
-				// for(int e=tensor.length-1;e>=0;e--){
-				// 	double[][] V = tensor[e];
-				// 	int N = V.length;
-				// 	int J = V[0].length + 1;
-					
-				// 	My.cout("-----"+e+"-------");
-				// 	My.cout("-----");
-				// 	My.cout("V:\n"+printMatrix(V));
-				// 	My.cout("N: "+N);
-				// 	My.cout("J: "+J);
-
-				// 	double[] FN1 = FN[e];
-				// 	double[] dFN1 = dFN[e];
-				// 	My.cout("FN["+e+"] : "+Arrays.toString(FN[e]));
-				// 	My.cout("dFN["+e+"] : "+Arrays.toString(dFN[e]));
-				// 	// double[] FN2 = FN[e+1];
-				// 	// double[] dFN2 = dFN[e+1];
-
-				// 	// double[][] VLI = new double[N][J-1]; //li
-				// 	// double[][] WIK = new double[J][M]; //ik
-					
-				// 	double[] preFN = _p;
-				// 	if(e>0){
-				// 		preFN = FN[e-1];
-				// 	}
-				// 	double[] postFN = _t;
-				// 	if(e<tensor.length-1){
-				// 		postFN = FN[e+1];
-				// 	}
-					
-				// 	double[] errTerms = new double[J-1];
-
-				// 	if(e==tensor.length-1){
-				// 		for(int i=0; i<J-1; i++){
-				// 			double fn = FN1[i];
-				// 			double Qi = (_t[i] - fn);
-				// 			errTerms[i] = Qi;
-				// 			My.cout("_t["+(i)+"]:"+_t[i]);
-				// 			My.cout("fn:"+fn);
-				// 			My.cout("Qi("+i+"):"+Qi);
-				// 		}
-				// 	}else{
-				// 		double[][] W = tensor[e+1];
-				// 		int M = W[0].length;
-				// 		My.cout("W:\n"+printMatrix(W));
-				// 		for(int i=1; i<J; i++){
-				// 			double Qk = 0;
-				// 			for(int k=0; k<M; k++){
-				// 				My.cout("sumDelta("+k+"):"+sumDeltas.get(k));
-				// 				Qk += W[i][k] * sumDeltas.get(k);
-				// 			}
-				// 			My.cout("Qk("+i+"):"+Qk);
-				// 			errTerms[i-1] = Qk;
-				// 		}
-				// 	}
-
-				// 	ERRs[e] = errTerms;
-					
-				// 	for(int l=0;l<N;l++){
-				// 		for(int i=0;i<J-1;i++){
-				// 			double Qk = errTerms[i];
-				// 			My.cout("Q("+i+"):"+Qk);
-				// 			V[l][i] += lRate * Qk;
-				// 			V[l][i] = My.stepify(V[l][i], acc);
-				// 		}
-				// 	}
-					
-				// 	if(e>0){
-				// 		sumDeltas = new ArrayList<>();
-				// 		for(int i=0; i<J-1; i++){
-				// 			double Qk = errTerms[i];
-				// 			double Qni = Qk * (dFN1[i]) * (1 - dFN1[i]);
-				// 			// double Qni = Qk * (FN1[i]) * (1 - FN1[i]);
-				// 			// double Qni = Qk * (FN1[i]);
-				// 			// double Qni = Qk * (dFN1[i]);
-				// 			sumDeltas.add(Qni);
-				// 		}
-				// 	}
-
+				// My.cout("ErrorCorrection Terms per Layer:");
+				// for(double[] corr:ERRs){
+				// 	// if(corr==null) continue;
+				// 	My.cout(printVector(corr));
 				// }
-				
 				if(prevERRs==null){
 					prevERRs = new double[ERRs.length][];
 				}
+
 				//if there's no change in error terms, then theres convergence
-				// if(Arrays.deepEquals(ERRs, prevERRs)){
-				// 	My.cout("Convergence in network detected. No changes in ERRs");
-				// 	conv = true;
-				// 	break;
-				// }else{
-				// 	conv = false;
-				// 	prevERRs = ERRs;
-				// }
+				if(Arrays.deepEquals(ERRs, prevERRs)){
+					My.cout("Convergence in network detected. No changes in ERRs");
+					conv = true;
+					break;
+				}else{
+					conv = false;
+					prevERRs = ERRs;
+				}
 				
 			}
-			epochCount++;
 
+			epochCount++;
 		}
 
 		My.cout("Took "+epochCount+" epochs");
