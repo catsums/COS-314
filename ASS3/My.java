@@ -315,6 +315,16 @@ public class My{
 		return ar;
 	}
 
+	public static double mod(double n, double d){
+		return ((n % d) + d) % d;
+	}
+	public static float mod(float n, float d){
+		return ((n % d) + d) % d;
+	}
+	public static int mod(int n, int d){
+		return ((n % d) + d) % d;
+	}
+
 	// public static void writeToFile(ArrayList<String> lines, String filePath) {
 	// 	try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
 	// 		for (String line : lines) {
