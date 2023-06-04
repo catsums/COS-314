@@ -153,14 +153,15 @@ public class NNetwork implements Serializable{
 			double[][] prev_FN = new double[tensor.length][];
 			double[] prevSums = null;
 			double[][] prevERRs = null;
-
+			ArrayList<Double> errors = new ArrayList<>();
+			
 			for(int c=0; c<setSize; c++){
-
+				
 				double[] _p = shiffledInputs[c];
 				double[] _t = PTMap.get(_p);
 				// double[] _p = p[c];
 				// double[] _t = t[c];
-
+				
 				double[][] FN = new double[tensor.length][];
 				double[][] dFN = new double[tensor.length][];
 				double[][] ERRs = new double[tensor.length][];
@@ -202,7 +203,7 @@ public class NNetwork implements Serializable{
 				if(
 					Arrays.deepEquals(FN, prev_FN)
 				){
-					My.cout("Convergence in network detected. No changes in FN");
+					// My.cout("Convergence in network detected. No changes in FN");
 					continue;
 				}else{
 					conv = false;
@@ -325,7 +326,7 @@ public class NNetwork implements Serializable{
 					}
 
 				}
-
+				errors.add(totalErr);
 
 				if(totalErr==0){
 					My.cout("Convergence in network detected. No changes in totalErr");
@@ -431,6 +432,8 @@ public class NNetwork implements Serializable{
 				
 			}
 			epochCount++;
+
+			My.cout("Errors: "+Arrays.toString(errors.toArray()));
 
 		}
 
