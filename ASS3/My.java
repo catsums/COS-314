@@ -325,6 +325,51 @@ public class My{
 		return ((n % d) + d) % d;
 	}
 
+	public static String SerializeObject(Serializable obj) throws Exception{
+		try {
+			ByteArrayOutputStream bo = new ByteArrayOutputStream();
+			ObjectOutputStream so = new ObjectOutputStream(bo);
+			so.writeObject(obj);
+			so.flush();
+			return bo.toString();
+		} catch (Exception e) {
+			System.out.println(e);
+			throw e;
+		}
+	}
+	public static <T extends Serializable> T DeserializeObject(String str) throws Exception{
+		try {
+			byte b[] = str.getBytes(); 
+			ByteArrayInputStream bi = new ByteArrayInputStream(b);
+			ObjectInputStream si = new ObjectInputStream(bi);
+			return (T) si.readObject();
+		} catch (Exception e) {
+			System.out.println(e);
+			throw e;
+		}
+	}
+
+	 /** Read the object from Base64 string. */
+	public static Object DeserializeFromBase64( String s ) throws IOException , ClassNotFoundException {
+		byte [] data = Base64.getDecoder().decode( s );
+		ObjectInputStream ois = new ObjectInputStream( 
+			new ByteArrayInputStream( data )
+		);
+		Object o  = ois.readObject();
+		ois.close();
+		return o;
+	}
+
+	/** Write the object to a Base64 string. */
+	public static String SerializeToBase64( Serializable o ) throws IOException {
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		ObjectOutputStream oos = new ObjectOutputStream( baos );
+		oos.writeObject( o );
+		oos.close();
+		return Base64.getEncoder().encodeToString(baos.toByteArray()); 
+	}
+
+
 	// public static void writeToFile(ArrayList<String> lines, String filePath) {
 	// 	try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
 	// 		for (String line : lines) {
