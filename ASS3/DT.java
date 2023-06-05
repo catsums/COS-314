@@ -6,8 +6,20 @@ import java.nio.file.Paths;
 import java.sql.Time;
 
 public class DT implements Serializable{
+	private static final long serialVersionUID = 69_420_001_001l;
+
+	public static class NodeTreePair implements Serializable{
+		private static final long serialVersionUID = 69_420_001_901l;
+		public Node root;
+		public DT dt;
+		public NodeTreePair(Node r, DT d){
+			dt = d; root = r;
+		}
+	}
 
 	public static class Node implements Serializable{
+		private static final long serialVersionUID = 69_420_001_002l;
+
 		public String attr;
 		public HashMap<String,Node> childs = new HashMap<>();
 
