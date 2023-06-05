@@ -153,7 +153,7 @@ public class NNetwork implements Serializable{
 			double[][] prev_FN = new double[tensor.length][];
 			double[] prevSums = null;
 			double[][] prevERRs = null;
-			ArrayList<Double> errors = new ArrayList<>();
+			double errors = 0;
 			
 			for(int c=0; c<setSize; c++){
 				
@@ -326,7 +326,7 @@ public class NNetwork implements Serializable{
 					}
 
 				}
-				errors.add(totalErr);
+				errors += totalErr;
 
 				if(totalErr==0){
 					My.cout("Convergence in network detected. No changes in totalErr");
@@ -433,7 +433,7 @@ public class NNetwork implements Serializable{
 			}
 			epochCount++;
 
-			My.cout("Errors: "+Arrays.toString(errors.toArray()));
+			My.cout("Error: "+errors);
 
 		}
 
