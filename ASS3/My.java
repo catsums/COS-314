@@ -369,6 +369,114 @@ public class My{
 		return Base64.getEncoder().encodeToString(baos.toByteArray()); 
 	}
 
+	public static Scanner inputSc = new Scanner(System.in);
+
+	public static double makeChoiceDouble(String prompt){
+		while(true){
+			
+			System.out.print(prompt+":\t");
+			
+				double val = inputSc.nextDouble();
+				
+				return val;
+			
+			
+		}
+	}
+	public static String makeChoiceString(String prompt){
+		while(true){
+			
+			System.out.print(prompt+":\t");
+			
+				String val = inputSc.next();
+				
+				return val;
+			
+			
+		}
+	}
+
+	public static long makeChoiceLong(String prompt){
+		while(true){
+			
+			System.out.print(prompt+":\t");
+			
+				long val = inputSc.nextLong();
+				
+				return val;
+			
+			
+		}
+	}
+
+	public static int makeChoiceInt(String prompt){
+		while(true){
+			
+			System.out.print(prompt+":\t");
+			
+				int val = inputSc.nextInt();
+				
+				return val;
+			
+			
+		}
+	}
+
+	public static int makeChoiceRange(String prompt, int min, int max){
+		while(true){
+			
+			System.out.print(prompt+":\t");
+			
+				int val = inputSc.nextInt();
+				if(val>=min && val<=max)  return val;
+			
+			
+		}
+	}
+
+	public static int makeChoiceUnsignedInt(String prompt){
+		while(true){
+			
+			System.out.print(prompt+":\t");
+			
+				int val = inputSc.nextInt();
+				if(val<0) return val;
+			
+			
+		}
+	}
+
+	public static boolean makeChoiceBool(String prompt){
+		while(true){
+			
+			System.out.print(prompt+":\t");
+			
+				String val = inputSc.next();
+				switch(val.toLowerCase()){
+					case "1":
+					case "yes":
+					case "t":
+					case "true":
+					case "maybe":
+					case "i":
+					case "y": 
+						
+						return true;
+					case "0":
+					case "no":
+					case "f":
+					case "false":
+					case "maybe not":
+					case "n":
+						
+						return false;
+					default:
+						break;
+				}
+			
+			
+		}
+	}
 
 	// public static void writeToFile(ArrayList<String> lines, String filePath) {
 	// 	try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
