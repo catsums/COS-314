@@ -9,11 +9,196 @@ public class myMain{
 	public static void main(String[] args) throws Exception {
 		My.cout("| MAIN START |"); My.cout("---------------");
 
-		m5();
 
 		My.cout("---------------"); My.cout("| MAIN END |");
 		return;
 	}
+
+	public static class Result{
+		public HashMap<String,Object> params = new HashMap<>();
+		public String name;
+		public Object finalState;
+
+		public Result(String n){ name = n; }
+
+		public Object getParam(String key){
+			if(params.containsKey(key)) return params.get(key);
+			return null;
+		}
+		public Object setParam(String key, Object val){
+			Object x = getParam(key);
+			params.put(key, val);
+			return x;
+		}
+
+		@Override
+		public String toString(){
+			String out = "";
+
+			out += name + " : {\n";
+			
+			for(String key:params.keySet()){
+				out += key + " : " +  params.get(key).toString() + ", \n";
+			}
+
+			out += "RESULT : " + (finalState.toString());
+
+			out += "\n}";
+
+			return out;
+		} 
+	}
+
+	public static class TResult{
+		public String name;
+		public ArrayList<Result> results = new ArrayList<>();
+
+		public TResult(String n){ name = n; }
+
+		public void addResult(Result r){ results.add(r); }
+
+		@Override
+		public String toString(){
+			String out = "[\n";
+
+			for(Result r:results){
+				out += r.toString() + ", \n";
+			}
+
+			out += "]";
+
+			return out;
+		} 
+	}
+	public static class Timestamp{
+
+		private long startTime = 0;
+		private long stopTime = 0;
+
+		public void start(){
+			startTime = System.currentTimeMillis();
+		}public long stop(){
+			stopTime = System.currentTimeMillis();
+			return getTimeTakenInMillis();
+		}
+		public long getTimeTakenInMillis(){
+			return (stopTime - startTime);
+		}
+		public void reset(){
+			startTime = 0; stopTime = 0;
+		}
+	}
+
+	public static boolean SaveDecisionTree(DT dt, DT.Node root, String _name){
+		try{
+			String dtStr = My.SerializeToBase64(dt);
+			String rootStr = My.SerializeToBase64(root);
+
+			My.cout("Writing to log file...");
+			new File("myDTData").mkdir();
+
+			int c = 0;
+			File newLogFile = new File("myDTData/"+_name+".dat");
+			while(newLogFile.exists()){
+				newLogFile = new File("myDTData/"+_name+"("+(++c)+").dat");
+			}
+			newLogFile.createNewFile();
+
+			String logStr = String.join("\n", dtStr, rootStr);
+			Files.write(Paths.get(newLogFile.getPath()), logStr.getBytes());
+
+			My.cout("Saved DT in "+newLogFile.getPath());
+
+			return true;
+		}catch(Exception e){
+			My.cout("Serialisation/Saving file Failed.");
+			e.printStackTrace();
+
+			return false;
+		}
+	}
+	public static DT.NodeTreePair LoadDecisionTree(String _name){
+		try{
+			File file = new File("myDTData/"+_name+"dat");
+			Scanner scanner = new Scanner(file);
+
+			String dtStr = null;
+			String nodeStr = null;
+			if(scanner.hasNextLine()){
+				dtStr = scanner.nextLine();
+			}
+			if(scanner.hasNextLine()){
+				nodeStr = scanner.nextLine();
+			}
+
+			if(dtStr==null || nodeStr==null){
+				My.cout("Data is empty"); return null;
+			}
+
+			DT dt = (DT) My.DeserializeFromBase64(dtStr);
+			DT.Node node = (DT.Node) My.DeserializeFromBase64(nodeStr);
+
+			return new DT.NodeTreePair(node, dt);
+		}catch(Exception e){
+			My.cout("Deserialisation/Loading file Failed.");
+			e.printStackTrace();
+
+			return null;
+		}
+	}
+
+	public static boolean SaveNeuralNetwork(NNetwork obj, String _name){
+		try{
+			String str = My.SerializeToBase64(obj);
+
+			My.cout("Writing to log file...");
+			new File("myNNData").mkdir();
+
+			int c = 0;
+			File newLogFile = new File("myNNData/"+_name+".dat");
+			while(newLogFile.exists()){
+				newLogFile = new File("myNNData/"+_name+"("+(++c)+").dat");
+			}
+			newLogFile.createNewFile();
+
+			String logStr = str;
+			Files.write(Paths.get(newLogFile.getPath()), logStr.getBytes());
+
+			My.cout("Saved NN in "+newLogFile.getPath());
+
+			return true;
+		}catch(Exception e){
+			My.cout("Serialisation/Saving file Failed.");
+			e.printStackTrace();
+
+			return false;
+		}
+	}
+	public static NNetwork LoadNeuralNetwork(String _name){
+		try{
+			File file = new File("myNNData/"+_name+"dat");
+			Scanner scanner = new Scanner(file);
+
+			String data = null;
+			if(scanner.hasNextLine()){
+				data = scanner.nextLine();
+			}
+
+			if(data==null){
+				My.cout("Data is empty"); return null;
+			}
+
+			NNetwork net = (NNetwork) My.DeserializeFromBase64(data);
+
+			return net;
+		}catch(Exception e){
+			My.cout("Deserialisation/Loading file Failed.");
+			e.printStackTrace();
+
+			return null;
+		}
+	}
+
 
 	public static void m5(){
 		///settings
@@ -23,13 +208,15 @@ public class myMain{
 		String filename = "breast-cancer.data";
 		long seed = 123_456_789l;
 		int classIndex = 0;
-
+		
 		double crossOverRate = 0.5;
 		double mutationRate = 0.5;
 		
+		int secondClassIndex = 0;
 		double factor = 0;
 		double lRate = 0.5;
 		boolean isBipolar = false;
+		int[] instSizes = {5,5,5};
 
 		boolean saveFlag = false;
 
@@ -37,23 +224,51 @@ public class myMain{
 
 		My.cout("General Training Params: \n___________");
 
-		System.out.print("Enter Ratio (0 to 1): "); double _ratio = inputSc.nextDouble();
-		if(_ratio>0 && _ratio<1) ratio = _ratio;
-
-		System.out.print("Enter Filename: "); String _filename = inputSc.next();
-		filename = _filename;
-
-		System.out.print("Enter Class' Index (if it's 1st Attribute, choose 0): "); int _classIndex = inputSc.nextInt();
-		if(_classIndex>=0) classIndex = _classIndex;
-
-		System.out.print("Enter Seed (> 0): "); long _seed = inputSc.nextLong();
-		if(_seed>0) seed = _seed;
+		try{
+			System.out.print("Enter Ratio (0 to 1): "); double _ratio = inputSc.nextDouble();
+			if(_ratio>0 && _ratio<1) ratio = _ratio;
+		}catch(Exception e){}
+		
+		try{
+			System.out.print("Enter Filename: "); String _filename = inputSc.next();
+			filename = _filename;
+		}catch(Exception e){}
+		
+		try{
+			System.out.print("Enter Target Class' Index (if it's 1st Attribute, choose 0): "); int _classIndex = inputSc.nextInt();
+			classIndex = _classIndex;
+		}catch(Exception e){}
+		
+		try{
+			System.out.print("Enter Support Class' Index (if it's 1st Attribute, choose 0): "); int _classIndex2 = inputSc.nextInt();
+			secondClassIndex = _classIndex2;
+		}catch(Exception e){}
+		
+		try{
+			System.out.print("Enter Seed (> 0): "); long _seed = inputSc.nextLong();
+			if(_seed>0) seed = _seed;
+		}catch(Exception e){}
 
 		My.cout("ANN Params: \n___________");
 		
-		System.out.print("Enter Learning Rate: "); double _lRate = inputSc.nextDouble();
-		if(_lRate>0) lRate = _lRate;
+		try{
+			System.out.print("Enter Learning Rate: "); double _lRate = inputSc.nextDouble();
+			if(_lRate>0) lRate = _lRate;
+		}catch(Exception e){}
 		
+		System.out.println("Enter Number of Nodes per Hidden Layer seperated by spaces");
+		System.out.print(" (if you want 3 in first layer and 4 in second layer, type '3 4'): "); String _initSizesStr = inputSc.next();
+		String[] _initSizesStrs = _initSizesStr.split(" ");
+		ArrayList<Integer> _sizes = new ArrayList<>();
+		for(String sizeStr:_initSizesStrs){
+			int s = Integer.parseInt(sizeStr);
+			if(s>0) _sizes.add(s);
+		}
+		instSizes = new int[_sizes.size()];
+		for(int s=0;s<instSizes.length;s++){
+			instSizes[s] = _sizes.get(s);
+		}
+
 		System.out.print("Is Data Bipolar?: "); boolean _bipolar = inputSc.nextBoolean();
 		isBipolar = _bipolar;
 
@@ -70,8 +285,432 @@ public class myMain{
 		System.out.print("Save Data?: "); boolean _save = inputSc.nextBoolean();
 		saveFlag = _save;
 
+		TResult res = new TResult("RES-"+filename);
+
+		Result oRes = new Result("Overall-"+filename);
+		
+		Result gpRes = myGP(filename, classIndex, ratio, acc, seed, factor, mutationRate, crossOverRate);
+		Result nnRes = myNN(filename, classIndex, secondClassIndex, ratio, acc, seed, factor, lRate, isBipolar, instSizes);
+
+		res.addResult(gpRes);
+		res.addResult(nnRes);
+
+		oRes.setParam("ratio", ratio);
+		oRes.setParam("acc", acc);
+		oRes.setParam("seed", seed);
+		oRes.setParam("classIndex", classIndex);
+
+		res.addResult(oRes);
+
+		My.cout("--------------");
+		String str = res.toString();
+		My.cout(str);
+		My.cout("------");
+		if(saveFlag){
+			try{
+				My.cout("Writing to log file...");
+				new File("myLog").mkdir();
+	
+				int c = 0;
+				File newLogFile = new File("myLog/"+filename+".log");
+				while(newLogFile.exists()){
+					newLogFile = new File("myLog/"+filename+"("+(++c)+").log");
+				}
+				newLogFile.createNewFile();
+	
+				String logStr = str;
+
+				Files.write(Paths.get(newLogFile.getPath()), logStr.getBytes());
+	
+				My.cout("Saved Log in "+newLogFile.getPath());
+	
+			}catch(Exception e){
+				My.cout("Saving Log File failed.");
+				e.printStackTrace();
+			}
+
+			SaveNeuralNetwork((NNetwork) nnRes.finalState, "Catsimnet-"+filename);
+			DT.NodeTreePair pair = (DT.NodeTreePair) gpRes.finalState;
+			SaveDecisionTree(pair.dt, pair.root , "CatsimDT-"+filename);
+
+
+		}
+
 	}
 
+	public static Result myGP(String filename, int classIndex, double ratio, double acc, long _seed, double factor, double mutationRate, double crossOverRate){
+		My.cout("Genetic Programming Classfication");
+        My.cout("---------------");
+
+		File dataFile = new File("data/"+filename+"");
+
+		ArrayList<ArrayList<String>> dataset = new ArrayList<>();
+		
+		ArrayList<String[]> lines = new ArrayList<>();
+		try{
+			Scanner scanner = new Scanner(dataFile);
+			int count = 0;
+			// int len = 286;
+			int len = 286;
+
+			while(scanner.hasNextLine() && count<len){
+				String line = scanner.nextLine();
+
+				String[] vars = line.split(",");
+				lines.add(vars);
+
+				count++;
+			}
+			
+			My.cout("Counted "+count+" batch instances.");
+			
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+
+		ArrayList<ArrayList<String>> trainSet = new ArrayList<>();
+		ArrayList<ArrayList<String>> testSet = new ArrayList<>();
+		ArrayList<ArrayList<String>> missingSet = new ArrayList<>();
+
+		String[][] _lines = shuffleArray(lines.toArray(new String[0][]), _seed);
+		_lines = shuffleArray(_lines, _seed);
+		_lines = shuffleArray(_lines, _seed);
+
+		ArrayList<ArrayList<String>> attrs = new ArrayList<>();
+
+		for(String[] vars:_lines){
+			if(attrs.size()<vars.length){
+				for(int i=attrs.size();i<vars.length;i++){
+					attrs.add(new ArrayList<>());
+				}
+			}
+	
+			for(int i=0;i<vars.length;i++){
+				String _label = vars[i];
+				ArrayList<String> labels = attrs.get(i);
+	
+				int labelIndex = labels.indexOf(_label);
+				if(labelIndex<0){
+					if(_label.compareTo("?")!=0){
+						labelIndex = labels.size();
+						labels.add(_label);
+					}
+				}
+			}
+		}
+
+		classIndex = My.mod(classIndex , attrs.size() );
+		My.cout("Possible labels for Class: "+Arrays.toString(attrs.get(classIndex).toArray()));
+
+		for(String[] vars:_lines){
+			ArrayList<String> data = new ArrayList<>();
+
+			boolean missing = false;
+
+			for(int i=0;i<vars.length;i++){
+				int attr = -1;
+				ArrayList<String> labels = attrs.get(i);
+				for(int a=0;a<labels.size();a++){
+					String _var = vars[i].trim().toLowerCase();
+					String _att = labels.get(a).trim().toLowerCase();
+					if(_var.compareTo(_att)==0){
+						attr = a;
+						break;
+					}
+				}
+				if(attr!=-1){
+					data.add(labels.get(attr));
+				}else{
+					missing = true;
+					data.add("?");
+				}
+			}
+
+			if(!missing){
+				dataset.add(data);
+			}else{
+				missingSet.add(data);
+			}
+		}
+
+		ArrayList<String> _attrs = new ArrayList<>();
+		for(int i=0;i<attrs.size();i++){
+			_attrs.add(""+i+"");
+		}
+
+		DT tree = new DT(_attrs.toArray(new String[0]));
+
+		for(int i=0;i<(int)(ratio * (double)dataset.size()); i++){
+			trainSet.add(dataset.get(i));
+		}
+
+		for(int i=trainSet.size();i<dataset.size(); i++){
+			testSet.add(dataset.get(i));
+		}
+		for(int i=0;i<missingSet.size();i++){
+			testSet.add(missingSet.get(i));
+		}
+
+		for(ArrayList<String> data:trainSet){
+			tree.addData(data.toArray(new String[0]));
+		}
+
+		String chosenAtt = ""+classIndex+"";
+		int attIndex = Arrays.asList(tree.attributes).indexOf(chosenAtt);
+
+		My.cout("Attr: "+chosenAtt+" ("+attIndex+")");
+
+		Result res = new Result("GP-"+filename);
+		Timestamp tS = new Timestamp();
+		res.setParam("crossOverRate", crossOverRate);
+		res.setParam("mutationRate", mutationRate);
+		
+		tS.start();
+		DT.Node finalRoot = GPClassfication(tree, chosenAtt, testSet, 100, 50, mutationRate, crossOverRate, _seed);
+		res.setParam("timeTaken", tS.stop());
+
+		double accuracy = GetFitnessOfNode(finalRoot, testSet, tree, chosenAtt);
+		double fscore = GetFScoreOfNode(finalRoot, testSet, tree, chosenAtt);
+
+		res.finalState = new NodeTreePair(finalRoot, tree);
+
+		My.cout("Final Tree:\n"+finalRoot);
+		My.cout("Accuracy:\n"+accuracy);
+		My.cout("FScore:\n"+fscore);
+
+		res.setParam("ACCURACY", accuracy);
+		res.setParam("FSCORE", fscore);
+
+		return res;
+
+	}
+	public static Result myNN(String filename, int classIndex, int otherClassIndex, double ratio, double acc, long _seed, double factor, double lRate, boolean isBipolar, int[] instSizes){
+		My.cout("m2");
+        My.cout("---------------");
+
+		File dataFile = new File("data/breast-cancer.data");
+
+		ArrayList<double[]> dataset = new ArrayList<>();
+		ArrayList<double[]> classSet = new ArrayList<>();
+
+		ArrayList<double[]> fixSet = new ArrayList<>();
+		ArrayList<double[]> fixOutSet = new ArrayList<>();
+
+		
+		ArrayList<String[]> lines = new ArrayList<>();
+		try{
+			Scanner scanner = new Scanner(dataFile);
+			int count = 0; int len = 286;
+			
+
+			while(scanner.hasNextLine()){
+				String line = scanner.nextLine();
+
+				String[] vars = line.split(",");
+				lines.add(vars);
+
+				count++;
+			}
+
+			My.cout("Counted "+count+" batch instances.");
+			
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+
+		String[][] _lines = shuffleArray(lines.toArray(new String[0][]), _seed);
+		_lines = shuffleArray(_lines, _seed);
+
+		ArrayList<ArrayList<String>> attrs = new ArrayList<>();
+
+		for(String[] vars:_lines){
+			if(attrs.size()<vars.length){
+				for(int i=attrs.size();i<vars.length;i++){
+					attrs.add(new ArrayList<>());
+				}
+			}
+	
+			for(int i=0;i<vars.length;i++){
+				String _label = vars[i];
+				ArrayList<String> labels = attrs.get(i);
+	
+				int labelIndex = labels.indexOf(_label);
+				if(labelIndex<0){
+					if(_label.compareTo("?")!=0){
+						labelIndex = labels.size();
+						labels.add(_label);
+					}
+				}
+			}
+		}
+
+		classIndex = My.mod(classIndex , attrs.size() );
+		otherClassIndex = My.mod(otherClassIndex , attrs.size() );
+		My.cout("Possible labels for Class: "+Arrays.toString(attrs.get(classIndex).toArray()));
+
+		for(String[] vars:_lines){
+			ArrayList<Double> data = new ArrayList<>();
+			ArrayList<Double> classifier = new ArrayList<>();
+
+			boolean dataMissing = false;
+
+			for(int i=0;i<vars.length;i++){
+				int attr = -1;
+				ArrayList<String> labels = attrs.get(i);
+				for(int a=0;a<labels.size();a++){
+					String _var = vars[i].trim().toLowerCase();
+					String _att = labels.get(a).trim().toLowerCase();
+					if(_var.compareTo(_att)==0){
+						attr = a;
+						break;
+					}
+				}
+				if(attr!=-1){
+					if(i==classIndex){
+						double k = ((attr+1) / labels.size());
+						k = (k>0.5 ? 1 : (isBipolar ? -1 : 0));
+						classifier.add(k);
+						classifier.add((double)(k<0.5 ? 1 : (isBipolar ? -1 : 0)));
+					}else if(i==otherClassIndex){
+						double k = ((attr+1) / labels.size());
+						k = (k>0.5 ? 1 : (isBipolar ? -1 : 0));
+						classifier.add((double)(k<0.5 ? 1 : (isBipolar ? -1 : 0)));
+						classifier.add(k);
+					}
+					double k = ((attr+1));
+					data.add(My.stepify(k, acc));
+					
+				}else{
+					dataMissing = true;
+					data.add(-1.0);
+				}
+			}
+			double[] dataArr = new double[data.size()];
+			for(int i=0;i<dataArr.length;i++) dataArr[i] = data.get(i);
+			double[] classArr = new double[classifier.size()];
+			for(int i=0;i<classArr.length;i++) classArr[i] = classifier.get(i);
+
+			if(dataMissing){
+				fixSet.add(dataArr);
+				fixOutSet.add(classArr);
+			}else{
+				dataset.add(dataArr);
+				classSet.add(classArr);
+			}
+		}
+
+		ArrayList<double[]> trainData = new ArrayList<>();
+		ArrayList<double[]> trainOutData = new ArrayList<>();
+
+		for(int i=0;i<(int)(ratio * (double)dataset.size()); i++){
+			trainData.add(dataset.get(i));
+			trainOutData.add(classSet.get(i));
+		}
+
+		ArrayList<double[]> testData = new ArrayList<>();
+		ArrayList<double[]> testOutData = new ArrayList<>();
+
+		for(int i=trainData.size();i<dataset.size(); i++){
+			testData.add(dataset.get(i));
+			testOutData.add(classSet.get(i));
+		}
+
+		for(int i=0;i<fixSet.size();i++){
+			testData.add(fixSet.get(i));
+			testOutData.add(fixOutSet.get(i));
+		}
+
+		int inputSize = trainData.get(0).length;
+		int outputSize = trainOutData.get(0).length;
+		
+		NNetwork net = new NNetwork(inputSize, instSizes, outputSize);
+
+		net.accuracy = acc;
+		net.isBipolar = isBipolar;
+		net.learningRate = lRate;
+
+		net.activationFuncs = new String[]{
+			"sigmoid","sigmoid", "sigmoid", "sigmoid"
+		};
+
+		Result res = new Result("NN-"+filename);
+		res.setParam("classIndex2",otherClassIndex);
+		res.setParam("factor",factor);
+		res.setParam("lRate",lRate);
+		res.setParam("isBipolar",isBipolar);
+		res.setParam("instSizes",Arrays.toString(instSizes));
+
+		Timestamp tS = new Timestamp();
+
+		tS.start();
+
+		net.trainNetwork(
+			trainData.toArray(new double[0][]),
+			trainOutData.toArray(new double[0][]),
+			factor, _seed, 1_000l
+		);
+
+		double correct = 0;
+
+		int _tP = 0;
+		int _fP = 0;
+		int _tN = 0;
+		int _fN = 0;
+
+		for(int i=0; i<testData.size(); i++){
+			double[] input = testData.get(i);
+			double[] expOut = testOutData.get(i);
+
+			double[][] _res = net.process(input, factor);
+
+			double[] tOut = new double[_res[0].length];
+
+			for(int c=0;c<tOut.length;c++){
+				if(isBipolar){
+					tOut[c] = (_res[0][c] >= 0 ? 1 : -1);
+				}else{
+					tOut[c] = (_res[0][c] >= 0.5 ? 1 : 0);
+				}
+			}
+
+			if(Arrays.equals(expOut, tOut)){
+				correct++;
+				if(expOut[0] > 0){
+					_tP++;
+				}else{
+					_tN++;
+				}
+			}else{
+				if(tOut[0] > 0){
+					_fP++;
+				}else{
+					_fN++;
+				}
+			}
+
+		}
+
+		double accuracy = correct/testData.size();
+		double succRate = My.stepify(accuracy*100,0.001);
+
+		double fscore = _tP / (_tP + 0.5 * (_fP+_fN));
+		double _fscore = My.stepify(fscore*100, 0.001);
+		//tp / (tp + 0.5 * (fp+fn))
+		res.setParam("timeTaken", tS.stop());
+
+		res.finalState = net;
+
+		res.setParam("ACCURACY", accuracy);
+		res.setParam("FSCORE", fscore);
+
+		My.cout("Accuracy: "+succRate+"%");
+		My.cout("TruePos "+_tP+"\t TrueNeg: "+_tN+"");
+		My.cout("FalsePos: "+_fP+"\t FalseNeg: "+_fN+"");
+		My.cout("FScore: "+_fscore+"%");
+
+		return res;
+
+	}
 	public static void m4(){
 		My.cout("m4");
         My.cout("---------------");
